@@ -57,8 +57,12 @@ namespace LHON_Form
             double alpha = 3;
             double beta = (mean - mdl.min_r_abs) / (mdl.max_r_abs - mdl.min_r_abs) * (alpha - 1);
             //double nrm_rnd = (1 / Gamma.Sample(alpha, 1 / beta));
-            double nrm_rnd = InverseGamma.Sample(alpha, beta);
-            return (float)(mdl.min_r_abs + nrm_rnd * (mdl.max_r_abs - mdl.min_r_abs));
+            float res;
+            do
+                res = (float)(mdl.min_r_abs + InverseGamma.Sample(alpha, beta) * (mdl.max_r_abs - mdl.min_r_abs));
+            while (res <= mdl.min_r_abs || res >= mdl.max_r_abs);
+
+            return res;
         }
 
         private void new_model()
@@ -77,7 +81,6 @@ namespace LHON_Form
             double alpha = 3;
             double den_tmp = (mdl.max_r - mdl.min_r) / (alpha - 1);
             Func<double, double> beta = (mean) => (mean - mdl.min_r) / den_tmp;
-            Func<float, float> sample_raduis0 = (mean) => (float)InverseGamma.Sample(alpha, beta(mean));
 
             update_bottom_stat("Generating Model...");
 
@@ -112,84 +115,157 @@ namespace LHON_Form
 
             Func<float, float, float> get_rand = (float m, float M) => (float)random.NextDouble() * (M - m) + m;
 
+            float rc_slope = 1 / (mdl.nerve_r * 2) * (mdl.max_r - mdl.min_r);
+            Func<float, float, float> find_average = (float X, float Y) => mdl.min_r + (Y + mdl.nerve_r) * rc_slope; // Could be a function of Y too
+
+            Func<float, int> cor_to_pix = (float X) => (int)((X + mdl.nerve_r) * resolution);
+
             tic();
 
-            float rc_slope = 1 / (mdl.nerve_r * 2) * (mdl.max_r - mdl.min_r);
-
+            float Xc = 0, Yc = 0, Rc, Rc_avg, angle = 0; // in length unit
+            int xc = 0, yc = 0; // in pixels
+            
             for (int i = 0; i < neur_place_tries; i++)
             {
-                float Xc = get_rand(-mdl.nerve_r, mdl.nerve_r);
-                float Rc0 = mdl.min_r + (Xc + mdl.nerve_r) * rc_slope;
-                float Rc = Rc0;
-                if (!strict_mod)
-                {
-                    do
-                        //Rc = Maxf(Minf(sample_raduis(Rc0), mdl.max_r_abs), mdl.min_r_abs);
-                        Rc = sample_raduis(Rc0);
-                    while (Rc < mdl.min_r_abs || Rc > mdl.max_r_abs);
-                }
-
-                if (i % 10 == 0) Invoke(new Action(() => lbl_mdl_prog.Text = ((float)i / neur_place_tries * 100).ToString("0") + " %"));
-
-                float Yc = 0;
-                int xc = 0, yc = 0;
-
-                bool success = false;
-                for (int n = 0; n < 1; n++)
-                {
-                    Yc = get_rand(-mdl.nerve_r, mdl.nerve_r);
-                    if (Math.Sqrt(Xc * Xc + Yc * Yc) + Rc > mdl.nerve_r) continue;
-                    if (Math.Sqrt(Xc * Xc + Yc * Yc) - Rc < mdl.vein_rat * mdl.nerve_r) continue;
-                    xc = (int)((Xc + mdl.nerve_r) * resolution);
-                    yc = (int)((Yc + mdl.nerve_r) * resolution);
-                    if (tox[xc, yc] == true) continue;
-
-                    success = true; break;
-                }
-                if (!success) continue;
 
 
+                // =================================
+
+                if (i > 0) return;
+
+                // first neuron in the center
+                // Xc = Yc = 0;
+
+
+                Rc_avg = find_average(Xc, Yc);
+                if (strict_mod)
+                    Rc = Rc_avg;
+                else
+                    Rc = sample_raduis(Rc_avg);
+                
+                xc = cor_to_pix(Xc);
+                yc = cor_to_pix(Yc);
                 int rc = (int)(Rc * resolution);
 
                 int rc_clear = rc + (int)(mdl.clearance * resolution);
                 int rc_clear2 = rc_clear * rc_clear;
-                int x0 = Max(xc - rc_clear, 0);
-                int y0 = Max(yc - rc_clear, 0);
-                int x1 = Min(xc + rc_clear + 1, im_size);
-                int y1 = Min(yc + rc_clear + 1, im_size);
+                int box_x0 = Max(xc - rc_clear, 0);
+                int box_y0 = Max(yc - rc_clear, 0);
+                int box_x1 = Min(xc + rc_clear + 1, im_size);
+                int box_y1 = Min(yc + rc_clear + 1, im_size);
 
-                bool ignored = false;
-
-                if (mdl.n_neurs > 0)
+                Func<bool> check_whithin_nerve = () =>
                 {
-                    for (int y = y0; !ignored && y < y1; y++)
-                        for (int x = x0; !ignored && x < x1; x++)
+                    if (Math.Sqrt(Xc * Xc + Yc * Yc) + Rc > mdl.nerve_r) return true;
+                    if (Math.Sqrt(Xc * Xc + Yc * Yc) - Rc < mdl.vein_rat * mdl.nerve_r) return true;
+                    return false;
+                };
+
+                Action add_neur = () =>
+                {
+                    for (int y = box_y0; y < box_y1; y++)
+                        for (int x = box_x0; x < box_x1; x++)
                         {
                             float dx = x - xc;
                             float dy = y - yc;
                             if (rc_clear2 - (dx * dx + dy * dy) > 0)
-                                if (tox[x, y])
-                                    ignored = true;
+                                if (within_circle2(x, y, xc, yc, rc_clear) > 0)
+                                    tox[x, y] = true;
                         }
-                }
-                if (ignored) continue;
+                    mdl.neur_cor.Add(new float[3] { Xc, Yc, Rc });
+                    mdl.n_neurs++;
+                    update_n_neur_lbl();
+                };
 
-                for (int y = y0; !ignored && y < y1; y++)
-                    for (int x = x0; !ignored && x < x1; x++)
+                Func<bool> check_overlap = () =>
+                {
+                    bool ignored = false;
+
+                    if (mdl.n_neurs > 0)
                     {
-                        float dx = x - xc;
-                        float dy = y - yc;
-                        if (rc_clear2 - (dx * dx + dy * dy) > 0)
-                            if (within_circle2(x, y, xc, yc, rc_clear) > 0)
-                                tox[x, y] = true;
+                        for (int y = box_y0; !ignored && y < box_y1; y++)
+                            for (int x = box_x0; !ignored && x < box_x1; x++)
+                            {
+                                float dx = x - xc;
+                                float dy = y - yc;
+                                if (rc_clear2 - (dx * dx + dy * dy) > 0)
+                                    if (tox[x, y])
+                                        ignored = true;
+                            }
+                    }
+                    if (ignored) return true;
+                    return false;
+                };
+
+                add_neur();
+
+                // =================================
+
+                if (false)
+                {
+                    Xc = get_rand(-mdl.nerve_r, mdl.nerve_r);
+                    Rc_avg = mdl.min_r + (Xc + mdl.nerve_r) * rc_slope; // average raduis
+
+                    if (strict_mod)
+                        Rc = Rc_avg;
+                    else
+                    {
+                        //Rc = Maxf(Minf(sample_raduis(Rc0), mdl.max_r_abs), mdl.min_r_abs);
+                        Rc = sample_raduis(Rc_avg);
+
                     }
 
-                mdl.neur_cor.Add(new float[3] { Xc, Yc, Rc });
-                mdl.n_neurs++;
-                update_n_neur_lbl();
+                    if (i % 10 == 0) Invoke(new Action(() => lbl_mdl_prog.Text = ((float)i / neur_place_tries * 100).ToString("0") + " %"));
+
+                    // Find Y and Check if Inside Nerve
+
+                    bool success = false;
+                    for (int n = 0; n < 1; n++)
+                    {
+                        Yc = get_rand(-mdl.nerve_r, mdl.nerve_r);
+                        if (Math.Sqrt(Xc * Xc + Yc * Yc) + Rc > mdl.nerve_r) continue;
+                        if (Math.Sqrt(Xc * Xc + Yc * Yc) - Rc < mdl.vein_rat * mdl.nerve_r) continue;
+                        xc = (int)((Xc + mdl.nerve_r) * resolution);
+                        yc = (int)((Yc + mdl.nerve_r) * resolution);
+                        if (tox[xc, yc] == true) continue; // fast overlap check
+
+                        success = true; break;
+                    }
+                    if (!success) continue;
+
+                    // Overlap Management
+
+                    //int rc = (int)(Rc * resolution);
+
+                    //int rc_clear = rc + (int)(mdl.clearance * resolution);
+                    //int rc_clear2 = rc_clear * rc_clear;
+                    //int box_x0 = Max(xc - rc_clear, 0);
+                    //int box_y0 = Max(yc - rc_clear, 0);
+                    //int box_x1 = Min(xc + rc_clear + 1, im_size);
+                    //int box_y1 = Min(yc + rc_clear + 1, im_size);
+
+                    bool ignored = false;
+
+                    if (mdl.n_neurs > 0)
+                    {
+                        for (int y = box_y0; !ignored && y < box_y1; y++)
+                            for (int x = box_x0; !ignored && x < box_x1; x++)
+                            {
+                                float dx = x - xc;
+                                float dy = y - yc;
+                                if (rc_clear2 - (dx * dx + dy * dy) > 0)
+                                    if (tox[x, y])
+                                        ignored = true;
+                            }
+                    }
+                    if (ignored) continue;
+
+
+                }
+
             }
 
-            update_bottom_stat("Geretaing Model... Done! (" + (toc() / 1000).ToString("0.0") + " secs)");
+            update_bottom_stat("Genetaing Model... Done! (" + (toc() / 1000).ToString("0.0") + " secs)");
 
             Debug.WriteLine("model done");
 
@@ -374,7 +450,7 @@ namespace LHON_Form
                 }
 
             areal_progress_lim = areal_progress_lim / temp * 0.7F;
-            
+
             reset_state();
 
             update_bottom_stat("Preprocess Done! (" + (toc() / 1000).ToString("0.0") + " secs)");
@@ -434,7 +510,7 @@ namespace LHON_Form
                     gpu.Launch(block_s_r, thread_s_r).gpu_areal_progress(tox_dev, locked_pix_dev, progress_dev, areal_progress_lim);
                     gpu.CopyFromDevice(progress_dev, progress_dat);
                     gpu.CopyFromDevice(num_live_neur_dev, num_live_neur);
-                    
+
                     areal_progress = progress_dat[2] / progress_dat[0];
                     chron_progress = (float)iteration / last_itr;
 
@@ -525,7 +601,7 @@ namespace LHON_Form
             rate_dev = gpu.Allocate(rate); gpu.CopyToDevice(rate, rate_dev);
             locked_pix_dev = gpu.Allocate(locked_pix); gpu.CopyToDevice(locked_pix, locked_pix_dev);
             tox_touch_neur_dev = gpu.Allocate(tox_touch_neur); gpu.CopyToDevice(tox_touch_neur, tox_touch_neur_dev);
-            live_neur_dev = gpu.Allocate(live_neur); gpu.CopyToDevice(live_neur, live_neur_dev);           
+            live_neur_dev = gpu.Allocate(live_neur); gpu.CopyToDevice(live_neur, live_neur_dev);
             num_live_neur_dev = gpu.Allocate<int>(1); gpu.CopyToDevice(num_live_neur, num_live_neur_dev);
             death_itr_dev = gpu.Allocate(death_itr); gpu.CopyToDevice(death_itr, death_itr_dev);
             bmp_dev = gpu.Allocate(bmp_bytes); gpu.CopyToDevice(bmp_bytes, bmp_dev);

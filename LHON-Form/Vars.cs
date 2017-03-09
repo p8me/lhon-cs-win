@@ -79,7 +79,7 @@ namespace LHON_Form
 
         float[,] neurs_coor;
 
-        int[,] neurs_inside_pix, neurs_inside_pix_dev;
+        ushort[,] neurs_inside_pix, neurs_inside_pix_dev;
         int[] neurs_inside_pix_idx, neurs_inside_pix_idx_dev;
 
         int[,,] neurs_bound_touch_pix, neurs_bound_touch_pix_dev;
@@ -127,7 +127,7 @@ namespace LHON_Form
                 min_r_abs,
                 max_r_abs,
                 clearance;
-            public int n_neurs;
+            public int num_tries, n_neurs;
             public List<float[]> neur_cor;
         }
 
@@ -195,7 +195,7 @@ namespace LHON_Form
         }
 
 
-        private int Max(int v1, int v2)
+        public int Max(int v1, int v2)
         {
             return (v1 > v2) ? v1 : v2;
         }

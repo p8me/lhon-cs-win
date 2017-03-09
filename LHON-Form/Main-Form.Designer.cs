@@ -60,6 +60,8 @@ namespace LHON_Form
             this.lbl_mdl_prog = new System.Windows.Forms.Label();
             this.label16 = new System.Windows.Forms.Label();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.label23 = new System.Windows.Forms.Label();
+            this.txt_num_tries = new System.Windows.Forms.TextBox();
             this.txt_clearance = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
             this.txt_nerve_rad = new System.Windows.Forms.TextBox();
@@ -94,6 +96,9 @@ namespace LHON_Form
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
             this.chk_rec_avi = new System.Windows.Forms.CheckBox();
             this.tableLayoutPanel9 = new System.Windows.Forms.TableLayoutPanel();
+            this.tableLayoutPanel14 = new System.Windows.Forms.TableLayoutPanel();
+            this.label22 = new System.Windows.Forms.Label();
+            this.lbl_live_neur_perc = new System.Windows.Forms.Label();
             this.tableLayoutPanel8 = new System.Windows.Forms.TableLayoutPanel();
             this.label17 = new System.Windows.Forms.Label();
             this.lbl_chron_progress = new System.Windows.Forms.Label();
@@ -132,9 +137,6 @@ namespace LHON_Form
             this.txt_min_first_r = new System.Windows.Forms.TextBox();
             this.label13 = new System.Windows.Forms.Label();
             this.btn_snapshot = new System.Windows.Forms.Button();
-            this.tableLayoutPanel14 = new System.Windows.Forms.TableLayoutPanel();
-            this.label22 = new System.Windows.Forms.Label();
-            this.lbl_live_neur_perc = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.picB)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
@@ -145,6 +147,7 @@ namespace LHON_Form
             this.groupBox4.SuspendLayout();
             this.tableLayoutPanel3.SuspendLayout();
             this.tableLayoutPanel9.SuspendLayout();
+            this.tableLayoutPanel14.SuspendLayout();
             this.tableLayoutPanel8.SuspendLayout();
             this.tableLayoutPanel10.SuspendLayout();
             this.tableLayoutPanel5.SuspendLayout();
@@ -155,7 +158,6 @@ namespace LHON_Form
             this.statusStrip1.SuspendLayout();
             this.groupBox5.SuspendLayout();
             this.tableLayoutPanel11.SuspendLayout();
-            this.tableLayoutPanel14.SuspendLayout();
             this.SuspendLayout();
             // 
             // picB
@@ -199,8 +201,8 @@ namespace LHON_Form
             // 
             // btn_save_model
             // 
-            this.btn_save_model.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.btn_save_model.Location = new System.Drawing.Point(35, 243);
+            this.btn_save_model.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_save_model.Location = new System.Drawing.Point(35, 278);
             this.btn_save_model.Name = "btn_save_model";
             this.btn_save_model.Size = new System.Drawing.Size(105, 36);
             this.btn_save_model.TabIndex = 9;
@@ -209,8 +211,8 @@ namespace LHON_Form
             // 
             // btn_load_model
             // 
-            this.btn_load_model.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.btn_load_model.Location = new System.Drawing.Point(146, 243);
+            this.btn_load_model.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_load_model.Location = new System.Drawing.Point(146, 278);
             this.btn_load_model.Name = "btn_load_model";
             this.btn_load_model.Size = new System.Drawing.Size(105, 36);
             this.btn_load_model.TabIndex = 10;
@@ -219,8 +221,8 @@ namespace LHON_Form
             // 
             // btn_redraw
             // 
-            this.btn_redraw.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.btn_redraw.Location = new System.Drawing.Point(257, 243);
+            this.btn_redraw.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_redraw.Location = new System.Drawing.Point(257, 278);
             this.btn_redraw.Name = "btn_redraw";
             this.btn_redraw.Size = new System.Drawing.Size(89, 36);
             this.btn_redraw.TabIndex = 11;
@@ -240,10 +242,10 @@ namespace LHON_Form
             // 
             // label4
             // 
-            this.label4.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.label4.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.label4.AutoSize = true;
             this.label4.ForeColor = System.Drawing.Color.Maroon;
-            this.label4.Location = new System.Drawing.Point(34, 213);
+            this.label4.Location = new System.Drawing.Point(34, 248);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(136, 17);
             this.label4.TabIndex = 19;
@@ -251,10 +253,10 @@ namespace LHON_Form
             // 
             // lbl_n_Neurs
             // 
-            this.lbl_n_Neurs.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.lbl_n_Neurs.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.lbl_n_Neurs.AutoSize = true;
             this.lbl_n_Neurs.ForeColor = System.Drawing.Color.Maroon;
-            this.lbl_n_Neurs.Location = new System.Drawing.Point(168, 213);
+            this.lbl_n_Neurs.Location = new System.Drawing.Point(168, 248);
             this.lbl_n_Neurs.Name = "lbl_n_Neurs";
             this.lbl_n_Neurs.Size = new System.Drawing.Size(16, 17);
             this.lbl_n_Neurs.TabIndex = 18;
@@ -301,15 +303,15 @@ namespace LHON_Form
             this.groupBox1.Controls.Add(this.lbl_n_Neurs);
             this.groupBox1.Location = new System.Drawing.Point(743, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(373, 285);
+            this.groupBox1.Size = new System.Drawing.Size(373, 320);
             this.groupBox1.TabIndex = 25;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Model";
             // 
             // btn_export
             // 
-            this.btn_export.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.btn_export.Location = new System.Drawing.Point(277, 164);
+            this.btn_export.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.btn_export.Location = new System.Drawing.Point(277, 210);
             this.btn_export.Name = "btn_export";
             this.btn_export.Size = new System.Drawing.Size(69, 36);
             this.btn_export.TabIndex = 35;
@@ -318,10 +320,10 @@ namespace LHON_Form
             // 
             // chk_strict_rad
             // 
-            this.chk_strict_rad.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.chk_strict_rad.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.chk_strict_rad.AutoSize = true;
             this.chk_strict_rad.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.chk_strict_rad.Location = new System.Drawing.Point(35, 173);
+            this.chk_strict_rad.Location = new System.Drawing.Point(31, 219);
             this.chk_strict_rad.Name = "chk_strict_rad";
             this.chk_strict_rad.Size = new System.Drawing.Size(152, 21);
             this.chk_strict_rad.TabIndex = 34;
@@ -341,10 +343,10 @@ namespace LHON_Form
             // 
             // label16
             // 
-            this.label16.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.label16.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.label16.AutoSize = true;
             this.label16.ForeColor = System.Drawing.Color.Maroon;
-            this.label16.Location = new System.Drawing.Point(233, 213);
+            this.label16.Location = new System.Drawing.Point(233, 248);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(84, 17);
             this.label16.TabIndex = 20;
@@ -356,6 +358,8 @@ namespace LHON_Form
             this.tableLayoutPanel1.ColumnCount = 2;
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel1.Controls.Add(this.label23, 0, 5);
+            this.tableLayoutPanel1.Controls.Add(this.txt_num_tries, 0, 5);
             this.tableLayoutPanel1.Controls.Add(this.txt_clearance, 1, 4);
             this.tableLayoutPanel1.Controls.Add(this.label10, 0, 4);
             this.tableLayoutPanel1.Controls.Add(this.txt_nerve_rad, 1, 0);
@@ -368,19 +372,38 @@ namespace LHON_Form
             this.tableLayoutPanel1.Controls.Add(this.label15, 0, 1);
             this.tableLayoutPanel1.Location = new System.Drawing.Point(34, 21);
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 5;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 20F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(292, 146);
+            this.tableLayoutPanel1.RowCount = 6;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.66667F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.66667F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.66667F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.66667F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.66667F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 16.66667F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(292, 183);
             this.tableLayoutPanel1.TabIndex = 12;
+            // 
+            // label23
+            // 
+            this.label23.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.label23.AutoSize = true;
+            this.label23.Location = new System.Drawing.Point(54, 158);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(89, 17);
+            this.label23.TabIndex = 32;
+            this.label23.Text = "Num of Tries";
+            // 
+            // txt_num_tries
+            // 
+            this.txt_num_tries.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.txt_num_tries.Location = new System.Drawing.Point(149, 155);
+            this.txt_num_tries.Name = "txt_num_tries";
+            this.txt_num_tries.Size = new System.Drawing.Size(68, 22);
+            this.txt_num_tries.TabIndex = 31;
             // 
             // txt_clearance
             // 
             this.txt_clearance.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.txt_clearance.Location = new System.Drawing.Point(149, 120);
+            this.txt_clearance.Location = new System.Drawing.Point(149, 124);
             this.txt_clearance.Name = "txt_clearance";
             this.txt_clearance.Size = new System.Drawing.Size(68, 22);
             this.txt_clearance.TabIndex = 30;
@@ -389,7 +412,7 @@ namespace LHON_Form
             // 
             this.label10.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(38, 122);
+            this.label10.Location = new System.Drawing.Point(38, 126);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(105, 17);
             this.label10.TabIndex = 29;
@@ -398,7 +421,7 @@ namespace LHON_Form
             // txt_nerve_rad
             // 
             this.txt_nerve_rad.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.txt_nerve_rad.Location = new System.Drawing.Point(149, 3);
+            this.txt_nerve_rad.Location = new System.Drawing.Point(149, 4);
             this.txt_nerve_rad.Name = "txt_nerve_rad";
             this.txt_nerve_rad.Size = new System.Drawing.Size(68, 22);
             this.txt_nerve_rad.TabIndex = 3;
@@ -417,7 +440,7 @@ namespace LHON_Form
             // 
             this.label6.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(15, 64);
+            this.label6.Location = new System.Drawing.Point(15, 66);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(128, 17);
             this.label6.TabIndex = 22;
@@ -426,7 +449,7 @@ namespace LHON_Form
             // txt_min_rad
             // 
             this.txt_min_rad.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.txt_min_rad.Location = new System.Drawing.Point(149, 61);
+            this.txt_min_rad.Location = new System.Drawing.Point(149, 64);
             this.txt_min_rad.Name = "txt_min_rad";
             this.txt_min_rad.Size = new System.Drawing.Size(68, 22);
             this.txt_min_rad.TabIndex = 23;
@@ -435,7 +458,7 @@ namespace LHON_Form
             // 
             this.label5.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(12, 93);
+            this.label5.Location = new System.Drawing.Point(12, 96);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(131, 17);
             this.label5.TabIndex = 24;
@@ -444,7 +467,7 @@ namespace LHON_Form
             // txt_max_rad
             // 
             this.txt_max_rad.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.txt_max_rad.Location = new System.Drawing.Point(149, 90);
+            this.txt_max_rad.Location = new System.Drawing.Point(149, 94);
             this.txt_max_rad.Name = "txt_max_rad";
             this.txt_max_rad.Size = new System.Drawing.Size(68, 22);
             this.txt_max_rad.TabIndex = 25;
@@ -452,7 +475,7 @@ namespace LHON_Form
             // txt_vein_rad
             // 
             this.txt_vein_rad.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.txt_vein_rad.Location = new System.Drawing.Point(149, 32);
+            this.txt_vein_rad.Location = new System.Drawing.Point(149, 34);
             this.txt_vein_rad.Name = "txt_vein_rad";
             this.txt_vein_rad.Size = new System.Drawing.Size(68, 22);
             this.txt_vein_rad.TabIndex = 3;
@@ -461,7 +484,7 @@ namespace LHON_Form
             // 
             this.label15.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(26, 35);
+            this.label15.Location = new System.Drawing.Point(26, 36);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(117, 17);
             this.label15.TabIndex = 1;
@@ -512,9 +535,9 @@ namespace LHON_Form
             this.groupBox2.Controls.Add(this.btn_load_setts);
             this.groupBox2.Controls.Add(this.btn_save_setts);
             this.groupBox2.Controls.Add(this.tableLayoutPanel2);
-            this.groupBox2.Location = new System.Drawing.Point(743, 303);
+            this.groupBox2.Location = new System.Drawing.Point(743, 338);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(373, 207);
+            this.groupBox2.Size = new System.Drawing.Size(373, 195);
             this.groupBox2.TabIndex = 26;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Settings";
@@ -768,6 +791,43 @@ namespace LHON_Form
             this.tableLayoutPanel9.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tableLayoutPanel9.Size = new System.Drawing.Size(721, 49);
             this.tableLayoutPanel9.TabIndex = 29;
+            // 
+            // tableLayoutPanel14
+            // 
+            this.tableLayoutPanel14.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.tableLayoutPanel14.ColumnCount = 2;
+            this.tableLayoutPanel14.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel14.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel14.Controls.Add(this.label22, 0, 0);
+            this.tableLayoutPanel14.Controls.Add(this.lbl_live_neur_perc, 1, 0);
+            this.tableLayoutPanel14.ForeColor = System.Drawing.Color.Maroon;
+            this.tableLayoutPanel14.Location = new System.Drawing.Point(145, 27);
+            this.tableLayoutPanel14.Name = "tableLayoutPanel14";
+            this.tableLayoutPanel14.RowCount = 1;
+            this.tableLayoutPanel14.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.tableLayoutPanel14.Size = new System.Drawing.Size(167, 19);
+            this.tableLayoutPanel14.TabIndex = 40;
+            // 
+            // label22
+            // 
+            this.label22.Anchor = System.Windows.Forms.AnchorStyles.Right;
+            this.label22.AutoSize = true;
+            this.label22.Location = new System.Drawing.Point(7, 0);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(73, 19);
+            this.label22.TabIndex = 8;
+            this.label22.Text = "live neurs (%):";
+            // 
+            // lbl_live_neur_perc
+            // 
+            this.lbl_live_neur_perc.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lbl_live_neur_perc.AutoSize = true;
+            this.lbl_live_neur_perc.Location = new System.Drawing.Point(86, 1);
+            this.lbl_live_neur_perc.Name = "lbl_live_neur_perc";
+            this.lbl_live_neur_perc.Size = new System.Drawing.Size(16, 17);
+            this.lbl_live_neur_perc.TabIndex = 1;
+            this.lbl_live_neur_perc.Text = "0";
             // 
             // tableLayoutPanel8
             // 
@@ -1077,17 +1137,17 @@ namespace LHON_Form
             // 
             this.txt_status.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txt_status.Location = new System.Drawing.Point(743, 516);
+            this.txt_status.Location = new System.Drawing.Point(743, 539);
             this.txt_status.Multiline = true;
             this.txt_status.Name = "txt_status";
             this.txt_status.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txt_status.Size = new System.Drawing.Size(373, 255);
+            this.txt_status.Size = new System.Drawing.Size(373, 232);
             this.txt_status.TabIndex = 31;
             // 
             // btn_clr
             // 
             this.btn_clr.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_clr.Location = new System.Drawing.Point(1073, 516);
+            this.btn_clr.Location = new System.Drawing.Point(1073, 539);
             this.btn_clr.Name = "btn_clr";
             this.btn_clr.Size = new System.Drawing.Size(43, 27);
             this.btn_clr.TabIndex = 32;
@@ -1203,43 +1263,6 @@ namespace LHON_Form
             this.btn_snapshot.Text = "Snapshot";
             this.btn_snapshot.UseVisualStyleBackColor = true;
             // 
-            // tableLayoutPanel14
-            // 
-            this.tableLayoutPanel14.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.tableLayoutPanel14.ColumnCount = 2;
-            this.tableLayoutPanel14.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel14.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel14.Controls.Add(this.label22, 0, 0);
-            this.tableLayoutPanel14.Controls.Add(this.lbl_live_neur_perc, 1, 0);
-            this.tableLayoutPanel14.ForeColor = System.Drawing.Color.Maroon;
-            this.tableLayoutPanel14.Location = new System.Drawing.Point(145, 27);
-            this.tableLayoutPanel14.Name = "tableLayoutPanel14";
-            this.tableLayoutPanel14.RowCount = 1;
-            this.tableLayoutPanel14.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel14.Size = new System.Drawing.Size(167, 19);
-            this.tableLayoutPanel14.TabIndex = 40;
-            // 
-            // label22
-            // 
-            this.label22.Anchor = System.Windows.Forms.AnchorStyles.Right;
-            this.label22.AutoSize = true;
-            this.label22.Location = new System.Drawing.Point(7, 0);
-            this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(73, 19);
-            this.label22.TabIndex = 8;
-            this.label22.Text = "live neurs (%):";
-            // 
-            // lbl_live_neur_perc
-            // 
-            this.lbl_live_neur_perc.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.lbl_live_neur_perc.AutoSize = true;
-            this.lbl_live_neur_perc.Location = new System.Drawing.Point(86, 1);
-            this.lbl_live_neur_perc.Name = "lbl_live_neur_perc";
-            this.lbl_live_neur_perc.Size = new System.Drawing.Size(16, 17);
-            this.lbl_live_neur_perc.TabIndex = 1;
-            this.lbl_live_neur_perc.Text = "0";
-            // 
             // Main_Form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -1279,6 +1302,8 @@ namespace LHON_Form
             this.tableLayoutPanel3.ResumeLayout(false);
             this.tableLayoutPanel3.PerformLayout();
             this.tableLayoutPanel9.ResumeLayout(false);
+            this.tableLayoutPanel14.ResumeLayout(false);
+            this.tableLayoutPanel14.PerformLayout();
             this.tableLayoutPanel8.ResumeLayout(false);
             this.tableLayoutPanel8.PerformLayout();
             this.tableLayoutPanel10.ResumeLayout(false);
@@ -1298,8 +1323,6 @@ namespace LHON_Form
             this.groupBox5.ResumeLayout(false);
             this.tableLayoutPanel11.ResumeLayout(false);
             this.tableLayoutPanel11.PerformLayout();
-            this.tableLayoutPanel14.ResumeLayout(false);
-            this.tableLayoutPanel14.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1399,6 +1422,8 @@ namespace LHON_Form
         private TableLayoutPanel tableLayoutPanel14;
         private Label label22;
         private Label lbl_live_neur_perc;
+        private Label label23;
+        private TextBox txt_num_tries;
     }
 }
 

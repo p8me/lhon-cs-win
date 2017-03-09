@@ -227,8 +227,7 @@ namespace LHON_Form
                         neur_lbl[i].lbl = (tox_touch_neur[i] / neur_tol[i] * 100).ToString("0");
                         tox_touch_neur_last[i] = tox_touch_neur[i];
                     }
-                    else
-                        if (i != first_neur_idx) neur_lbl[i].lbl = "";
+                    else if (i != first_neur_idx) neur_lbl[i].lbl = "";
             }
 
         }
@@ -242,6 +241,7 @@ namespace LHON_Form
             txt_max_rad.TextChanged += (s, e) => mdl.max_r = read_float(s);
             txt_min_rad.TextChanged += (s, e) => mdl.min_r = read_float(s);
             txt_clearance.TextChanged += (s, e) => mdl.clearance = read_float(s);
+            txt_num_tries.TextChanged += (s, e) => mdl.num_tries = read_int(s);
 
             txt_resolution.TextChanged += (s, e) =>
             {
@@ -350,9 +350,10 @@ namespace LHON_Form
         {
             txt_nerve_rad.Text = mdl.nerve_r.ToString();
             txt_vein_rad.Text = mdl.vein_rat.ToString();
-            txt_clearance.Text = mdl.clearance.ToString();
             txt_max_rad.Text = mdl.max_r.ToString();
             txt_min_rad.Text = mdl.min_r.ToString();
+            txt_clearance.Text = mdl.clearance.ToString();
+            txt_num_tries.Text = mdl.num_tries.ToString(); 
 
             txt_resolution.Text = setts.resolution.ToString();
             txt_Tol.Text = setts.neur_tol_coeff.ToString();
@@ -462,6 +463,7 @@ namespace LHON_Form
 
         int picB_offx, picB_offy;
         float picB_ratio;
+
         private void picB_Resize(object sender, EventArgs e)
         {
             float picW = picB.Size.Width;
@@ -487,20 +489,35 @@ namespace LHON_Form
 
         private void picB_Paint(object sender, PaintEventArgs e)
         {
-            var nlbl0 = neur_lbl[first_neur_idx];
-            SizeF textSize0 = e.Graphics.MeasureString(nlbl0.lbl, this.Font);
-            e.Graphics.DrawString(nlbl0.lbl, this.Font, Brushes.Beige, nlbl0.x * picB_ratio + picB_offx - (textSize0.Width / 2), nlbl0.y * picB_ratio + picB_offy - (textSize0.Height / 2));
+            // the X on the first neuron
+            //var nlbl0 = neur_lbl[first_neur_idx];
+            //SizeF textSize0 = e.Graphics.MeasureString(nlbl0.lbl, this.Font);
+            //e.Graphics.DrawString(nlbl0.lbl, this.Font, Brushes.Beige, nlbl0.x * picB_ratio + picB_offx - (textSize0.Width / 2), nlbl0.y * picB_ratio + picB_offy - (textSize0.Height / 2));
 
-            if (chk_neur_lvl.Checked && neur_lbl != null)
-                for (int i = 0; i < mdl.n_neurs; i++)
-                {
-                    var nlbl = neur_lbl[i];
-                    if (nlbl.lbl.Length > 0 && show_neur_lvl[i] && i != first_neur_idx)
-                    {
-                        SizeF textSize = e.Graphics.MeasureString(nlbl.lbl, this.Font);
-                        e.Graphics.DrawString(nlbl.lbl, this.Font, Brushes.White, nlbl.x * picB_ratio + picB_offx - (textSize.Width / 2), nlbl.y * picB_ratio + picB_offy - (textSize.Height / 2));
-                    }
-                }
+            //if (mdl_neur_lbl != null && mdl_neur_lbl.Length > 0)
+            //    for (int i = 0; i < mdl_n_neurs; i++)
+            //    {
+            //        var lbli = mdl_neur_lbl[i];
+            //        if (lbli != null)
+            //        {
+            //            SizeF textSize = e.Graphics.MeasureString(lbli.lbl, this.Font);
+            //            float x = lbli.x * picB_ratio + picB_offx - (textSize.Width / 2);
+            //            float y = lbli.y * picB_ratio + picB_offy - (textSize.Height / 2);
+            //            e.Graphics.DrawString(lbli.lbl, this.Font, Brushes.White, x, y);
+
+            //        }
+            //    }
+
+            //if (chk_neur_lvl.Checked && neur_lbl != null && nlbl.lbl.Length > 0)
+            //    for (int i = 0; i < mdl.n_neurs; i++)
+            //    {
+            //        var nlbl = neur_lbl[i];
+            //        if (show_neur_lvl[i] && i != first_neur_idx)
+            //        {
+            //            SizeF textSize = e.Graphics.MeasureString(nlbl.lbl, this.Font);
+            //            e.Graphics.DrawString(nlbl.lbl, this.Font, Brushes.White, nlbl.x * picB_ratio + picB_offx - (textSize.Width / 2), nlbl.y * picB_ratio + picB_offy - (textSize.Height / 2));
+            //        }
+            //    }
         }
 
         private void picB_Click(object sender, EventArgs e)

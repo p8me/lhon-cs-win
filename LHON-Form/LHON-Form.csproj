@@ -66,6 +66,9 @@
     <Compile Include="GUI.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="model_gen.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Vars.cs">
       <SubType>Form</SubType>
     </Compile>

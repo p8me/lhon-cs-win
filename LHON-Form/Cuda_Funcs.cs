@@ -90,7 +90,7 @@ namespace LHON_Form
         [Cudafy]
         // Updates: tox_touch_neur, rate, locked_pix and live_neur
         public static void gpu_update_live_neurs(GThread thread, int n_neurs, float[,] tox, float[,] rate, bool[] live_neur, int[] num_live_neur, float[] tox_touch_neur, float[] neur_tol, int[,,] neurs_bound_touch_pix, int[] neurs_bound_touch_npix,
-            int[,] neurs_inside_pix, int[] neurs_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr)
+            ushort[,] neurs_inside_pix, int[] neurs_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr)
         {
             int t = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
             int stride = thread.blockDim.x * thread.gridDim.x;

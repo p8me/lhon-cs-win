@@ -30,13 +30,13 @@ namespace LHON_Form
 
         float sample_raduis(float mean)
         {
-            double alpha = 1.3; // 3
+            double alpha = 3;
             double beta = (mean - mdl.min_r_abs) / (mdl.max_r_abs - mdl.min_r_abs) * (alpha - 1);
             //double nrm_rnd = (1 / Gamma.Sample(alpha, 1 / beta));
             float res;
             do
             {
-                double samp = InverseGamma.Sample(alpha, beta)/5;
+                double samp = InverseGamma.Sample(alpha, beta);
                 //double samp = 1 / Gamma.Sample(alpha, 1 / beta);
                 res = (float)(mdl.min_r_abs + samp * (mdl.max_r_abs - mdl.min_r_abs));
             }
@@ -60,7 +60,7 @@ namespace LHON_Form
         int mdl_n_neurs;
 
         neur_lbl_class[] mdl_neur_lbl;
-        
+
 
         // takes Xc, Yc and Rc and updates all pixel-based params
         void update_box()
@@ -124,13 +124,13 @@ namespace LHON_Form
             //        { .94,    .93,    1.08,    1.19,    1.18,    1.17 },
             //        { .92,   1.02,    1.02,    1.14,    1.16,    1.24 },
             //        {1.01,    1.1,    1.10,    1.22,    1.22,    1.21 } };
-            
+
             mdl_resolution = 20; // 8 / mdl.clearance;
 
             im_size = (int)(mdl.nerve_r * 2 * mdl_resolution);
-            
+
             mdl_occupied = new bool[im_size, im_size];
-            
+
             // Generate random coordinates and raduis
             Random random = new Random();
             Func<float, float, float> get_rand = (float m, float M) => (float)random.NextDouble() * (M - m) + m;
@@ -142,14 +142,18 @@ namespace LHON_Form
             Xc = 0; Yc = 0; Xcll = 0; Xcl = 0; Ycll = 0; Ycl = 0; Rcl = 0;
             angle = 0;
 
-            float angle_step = 0.05F;
+            float angle_step = 0.08F;
             float distance_step = mdl.clearance / 2;
 
             tic();
 
-            for (int i = 0; i < mdl.num_tries; i++)
+            int num_tries = (int)(mdl.num_tries * mdl.nerve_r * mdl.nerve_r);
+
+            for (int i = 0; i < num_tries; i++)
             {
                 // =================================
+
+                if (i % 20 == 0) update_mdl_prog((float)i / num_tries);
 
                 Rc_avg = find_average(Xcl, Ycl);
                 if (strict_mod)
@@ -230,9 +234,9 @@ namespace LHON_Form
             mdl.n_neurs = 0;
 
             // REMOVE 2
-            mdl_neur_lbl = new neur_lbl_class[mdl_n_neurs];
+            //mdl_neur_lbl = new neur_lbl_class[mdl_n_neurs];
 
-            int idx = 0;
+            //int idx = 0;
             for (int i = 0; i < mdl_n_neurs; i++)
             {
                 float cent_dis = (float)Math.Sqrt(mdl_neur_cor[i][0] * mdl_neur_cor[i][0] +
@@ -244,13 +248,12 @@ namespace LHON_Form
                 mdl.n_neurs++;
 
                 // REMOVE
-
-                float tempx = (mdl_neur_cor[i][0] + mdl.nerve_r + nerve_clear) * setts.resolution;
-                float tempy = (mdl_neur_cor[i][1] + mdl.nerve_r + nerve_clear) * setts.resolution;
-                mdl_neur_lbl[idx] = new neur_lbl_class { lbl = (i + 1).ToString("0"), x = tempx, y = tempy };
-                idx++;
+                //float tempx = (mdl_neur_cor[i][0] + mdl.nerve_r + nerve_clear) * setts.resolution;
+                //float tempy = (mdl_neur_cor[i][1] + mdl.nerve_r + nerve_clear) * setts.resolution;
+                //mdl_neur_lbl[idx] = new neur_lbl_class { lbl = (i + 1).ToString("0"), x = tempx, y = tempy };
+                //idx++;
             }
-            
+
             append_stat("Model Generated in " + (toc() / 1000).ToString("0.0") + " secs\n");
 
             Debug.WriteLine("model done");

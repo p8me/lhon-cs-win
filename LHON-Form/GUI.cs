@@ -36,7 +36,11 @@ namespace LHON_Form
 
             chk_show_bound.CheckedChanged += (o, e) => update_show_opts();
             chk_show_tox.CheckedChanged += (o, e) => update_show_opts();
-            btn_reset.Click += (s, e) => { reset_state(); set_btn_start_txt("&Start"); };
+            btn_reset.Click += (s, e) =>
+            {
+                if (sim_stat == sim_stat_enum.Running) return;
+                reset_state(); set_btn_start_txt("&Start");
+            };
 
             btn_start.Click += (s, e) =>
             {
@@ -109,7 +113,7 @@ namespace LHON_Form
             show_opts[1] = chk_show_tox.Checked;
 
             gpu.CopyToDevice(show_opts, show_opts_dev);
-            update_bmp_from_tox(false);
+            update_bmp_from_tox(true);
         }
 
         // ========================================= Start / Stop
@@ -153,9 +157,16 @@ namespace LHON_Form
 
         void update_n_neur_lbl()
         {
-            string s = mdl.n_neurs.ToString();
-            if (InvokeRequired) Invoke(new Action(() => lbl_n_Neurs.Text = s));
-            else lbl_n_Neurs.Text = s;
+            if (InvokeRequired)
+                Invoke(new Action(() => update_n_neur_lbl()));
+            else
+                lbl_n_Neurs.Text = mdl.n_neurs.ToString() + " (" +
+                    (Math.Pow((mdl.nerve_r / real_model_nerve_r), 2) * real_model_num_neurs).ToString("0") + ")";
+        }
+
+        void update_mdl_prog(float prog)
+        {
+            update_bottom_stat("Generating Model ... " + (prog * 100).ToString("0.0") + " %");
         }
 
         void update_image_siz_lbl()
@@ -241,13 +252,13 @@ namespace LHON_Form
             txt_max_rad.TextChanged += (s, e) => mdl.max_r = read_float(s);
             txt_min_rad.TextChanged += (s, e) => mdl.min_r = read_float(s);
             txt_clearance.TextChanged += (s, e) => mdl.clearance = read_float(s);
-            txt_num_tries.TextChanged += (s, e) => mdl.num_tries = read_int(s);
+            txt_num_tries.TextChanged += (s, e) => mdl.num_tries = read_float(s);
 
             txt_resolution.TextChanged += (s, e) =>
             {
                 setts.resolution = read_float(s);
                 float temp = setts.resolution * (mdl.max_r + mdl.min_r) / 2;
-                area_res_factor = Maxf(temp * temp / 5, 1F);
+                area_res_factor = Maxf(temp * temp * 2, 1F);
             };
             txt_Tol.TextChanged += (s, e) => setts.neur_tol_coeff = read_float(s);
 
@@ -353,7 +364,7 @@ namespace LHON_Form
             txt_max_rad.Text = mdl.max_r.ToString();
             txt_min_rad.Text = mdl.min_r.ToString();
             txt_clearance.Text = mdl.clearance.ToString();
-            txt_num_tries.Text = mdl.num_tries.ToString(); 
+            txt_num_tries.Text = mdl.num_tries.ToString();
 
             txt_resolution.Text = setts.resolution.ToString();
             txt_Tol.Text = setts.neur_tol_coeff.ToString();
@@ -366,9 +377,9 @@ namespace LHON_Form
             float num;
             if (!float.TryParse(txtB.Text, out num))
             {
-                txtB.Text = "0";
-                txtB.SelectionStart = 0;
-                txtB.SelectionLength = txtB.Text.Length;
+                //txtB.Text = "0";
+                //txtB.SelectionStart = 0;
+                //txtB.SelectionLength = txtB.Text.Length;
                 return 0;
             }
             return num;
@@ -380,9 +391,9 @@ namespace LHON_Form
             int num;
             if (!int.TryParse(txtB.Text, out num))
             {
-                txtB.Text = "0";
-                txtB.SelectionStart = 0;
-                txtB.SelectionLength = txtB.Text.Length;
+                //txtB.Text = "0";
+                //txtB.SelectionStart = 0;
+                //txtB.SelectionLength = txtB.Text.Length;
                 return 0;
             }
             return num;
@@ -391,11 +402,9 @@ namespace LHON_Form
         // =========================== BMP Management
         unsafe private void update_bmp_from_tox(bool reload_tox_dev)
         {
-            if (false) // is_running_on_gpu   OR   is_gpu_available
+            if (reload_tox_dev)
             {
-                //if (reload_tox_dev)
                 gpu.CopyToDevice(tox, tox_dev);
-
                 gpu.Launch(block_s_r, thread_s_r).gpu_fill_bmp(tox_dev, bmp_dev, show_opts_dev, touch_pix_dev);
                 gpu.CopyFromDevice(bmp_dev, bmp_bytes);
             }
@@ -490,9 +499,22 @@ namespace LHON_Form
         private void picB_Paint(object sender, PaintEventArgs e)
         {
             // the X on the first neuron
-            //var nlbl0 = neur_lbl[first_neur_idx];
-            //SizeF textSize0 = e.Graphics.MeasureString(nlbl0.lbl, this.Font);
-            //e.Graphics.DrawString(nlbl0.lbl, this.Font, Brushes.Beige, nlbl0.x * picB_ratio + picB_offx - (textSize0.Width / 2), nlbl0.y * picB_ratio + picB_offy - (textSize0.Height / 2));
+            if (neur_lbl != null)
+            {
+                var nlbl0 = neur_lbl[first_neur_idx];
+                SizeF textSize0 = e.Graphics.MeasureString(nlbl0.lbl, this.Font);
+                e.Graphics.DrawString(nlbl0.lbl, this.Font, Brushes.Beige, nlbl0.x * picB_ratio + picB_offx - (textSize0.Width / 2), nlbl0.y * picB_ratio + picB_offy - (textSize0.Height / 2));
+                if (chk_neur_lvl.Checked)
+                    for (int i = 0; i < mdl.n_neurs; i++)
+                    {
+                        var nlbl = neur_lbl[i];
+                        if (show_neur_lvl[i] && i != first_neur_idx && nlbl.lbl.Length > 0)
+                        {
+                            SizeF textSize = e.Graphics.MeasureString(nlbl.lbl, this.Font);
+                            e.Graphics.DrawString(nlbl.lbl, this.Font, Brushes.White, nlbl.x * picB_ratio + picB_offx - (textSize.Width / 2), nlbl.y * picB_ratio + picB_offy - (textSize.Height / 2));
+                        }
+                    }
+            }
 
             //if (mdl_neur_lbl != null && mdl_neur_lbl.Length > 0)
             //    for (int i = 0; i < mdl_n_neurs; i++)
@@ -504,18 +526,6 @@ namespace LHON_Form
             //            float x = lbli.x * picB_ratio + picB_offx - (textSize.Width / 2);
             //            float y = lbli.y * picB_ratio + picB_offy - (textSize.Height / 2);
             //            e.Graphics.DrawString(lbli.lbl, this.Font, Brushes.White, x, y);
-
-            //        }
-            //    }
-
-            //if (chk_neur_lvl.Checked && neur_lbl != null && nlbl.lbl.Length > 0)
-            //    for (int i = 0; i < mdl.n_neurs; i++)
-            //    {
-            //        var nlbl = neur_lbl[i];
-            //        if (show_neur_lvl[i] && i != first_neur_idx)
-            //        {
-            //            SizeF textSize = e.Graphics.MeasureString(nlbl.lbl, this.Font);
-            //            e.Graphics.DrawString(nlbl.lbl, this.Font, Brushes.White, nlbl.x * picB_ratio + picB_offx - (textSize.Width / 2), nlbl.y * picB_ratio + picB_offy - (textSize.Height / 2));
             //        }
             //    }
         }
@@ -563,4 +573,15 @@ class CueTextBox : TextBox
     // PInvoke
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, string lp);
+}
+
+class PictureBoxWithInterpolationMode : PictureBox
+{
+    public InterpolationMode InterpolationMode { get; set; }
+
+    protected override void OnPaint(PaintEventArgs paintEventArgs)
+    {
+        paintEventArgs.Graphics.InterpolationMode = InterpolationMode;
+        base.OnPaint(paintEventArgs);
+    }
 }

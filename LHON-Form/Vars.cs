@@ -30,6 +30,9 @@ namespace LHON_Form
         string avi_file;
         VideoStream aviStream;
 
+        float real_model_nerve_r = 750; // um
+        int real_model_num_neurs = 1200000;
+        
         int first_neur_idx = 0;
 
         int max_set_size_bound, max_set_size_bound_touch, mean_num_pix_inside_neur;
@@ -106,12 +109,10 @@ namespace LHON_Form
         const int Block_Size = 12;
         dim3 block_s_r, thread_s_r;
         byte[,,] bmp_dev;
-
-
+        
         enum sim_stat_enum { None, Running, Paused, Successful, Failed };
         sim_stat_enum sim_stat = sim_stat_enum.None;
-
-
+        
         private class neur_lbl_class
         {
             public string lbl;
@@ -127,7 +128,8 @@ namespace LHON_Form
                 min_r_abs,
                 max_r_abs,
                 clearance;
-            public int num_tries, n_neurs;
+            public int n_neurs;
+            public float num_tries;
             public List<float[]> neur_cor;
         }
 

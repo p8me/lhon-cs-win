@@ -5,6 +5,8 @@ namespace LHON_Form
 {
     partial class Main_Form
     {
+        bool first_compile = true;
+
         /// <summary>
         /// Required designer variable.
         /// </summary>
@@ -25,17 +27,6 @@ namespace LHON_Form
 
         #region Windows Form Designer generated code
 
-        private class PictureBoxWithInterpolationMode : PictureBox
-        {
-            public InterpolationMode InterpolationMode { get; set; }
-
-            protected override void OnPaint(PaintEventArgs paintEventArgs)
-            {
-                paintEventArgs.Graphics.InterpolationMode = InterpolationMode;
-                base.OnPaint(paintEventArgs);
-            }
-        }
-
         /// <summary>
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
@@ -43,7 +34,9 @@ namespace LHON_Form
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main_Form));
-            this.picB = new LHON_Form.Main_Form.PictureBoxWithInterpolationMode();
+            this.picB = new System.Windows.Forms.PictureBox();
+            this.txt_sw_range1 = new System.Windows.Forms.TextBox();
+            this.txt_sw_range2 = new System.Windows.Forms.TextBox();
             this.btn_start = new System.Windows.Forms.Button();
             this.btn_reset = new System.Windows.Forms.Button();
             this.btn_save_model = new System.Windows.Forms.Button();
@@ -57,8 +50,6 @@ namespace LHON_Form
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.btn_export = new System.Windows.Forms.Button();
             this.chk_strict_rad = new System.Windows.Forms.CheckBox();
-            this.lbl_mdl_prog = new System.Windows.Forms.Label();
-            this.label16 = new System.Windows.Forms.Label();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.label23 = new System.Windows.Forms.Label();
             this.txt_num_tries = new System.Windows.Forms.TextBox();
@@ -90,7 +81,6 @@ namespace LHON_Form
             this.chk_save_prog = new System.Windows.Forms.CheckBox();
             this.btn_sweep = new System.Windows.Forms.Button();
             this.cmb_sw_sel1 = new System.Windows.Forms.ComboBox();
-            this.txt_sw_range1 = new CueTextBox();
             this.chk_save_sw_prog = new System.Windows.Forms.CheckBox();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
@@ -133,7 +123,6 @@ namespace LHON_Form
             this.label21 = new System.Windows.Forms.Label();
             this.label20 = new System.Windows.Forms.Label();
             this.cmb_sw_sel2 = new System.Windows.Forms.ComboBox();
-            this.txt_sw_range2 = new CueTextBox();
             this.txt_min_first_r = new System.Windows.Forms.TextBox();
             this.label13 = new System.Windows.Forms.Label();
             this.btn_snapshot = new System.Windows.Forms.Button();
@@ -165,7 +154,6 @@ namespace LHON_Form
             this.picB.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.picB.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.picB.Location = new System.Drawing.Point(16, 196);
             this.picB.Name = "picB";
             this.picB.Size = new System.Drawing.Size(721, 529);
@@ -178,6 +166,22 @@ namespace LHON_Form
             this.picB.MouseMove += new System.Windows.Forms.MouseEventHandler(this.picB_MouseMove);
             this.picB.MouseUp += new System.Windows.Forms.MouseEventHandler(this.picB_MouseUp);
             this.picB.Resize += new System.EventHandler(this.picB_Resize);
+            // 
+            // txt_sw_range1
+            // 
+            this.txt_sw_range1.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txt_sw_range1.Location = new System.Drawing.Point(274, 6);
+            this.txt_sw_range1.Name = "txt_sw_range1";
+            this.txt_sw_range1.Size = new System.Drawing.Size(110, 22);
+            this.txt_sw_range1.TabIndex = 24;
+            // 
+            // txt_sw_range2
+            // 
+            this.txt_sw_range2.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txt_sw_range2.Location = new System.Drawing.Point(274, 41);
+            this.txt_sw_range2.Name = "txt_sw_range2";
+            this.txt_sw_range2.Size = new System.Drawing.Size(110, 22);
+            this.txt_sw_range2.TabIndex = 39;
             // 
             // btn_start
             // 
@@ -202,7 +206,7 @@ namespace LHON_Form
             // btn_save_model
             // 
             this.btn_save_model.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btn_save_model.Location = new System.Drawing.Point(35, 278);
+            this.btn_save_model.Location = new System.Drawing.Point(35, 282);
             this.btn_save_model.Name = "btn_save_model";
             this.btn_save_model.Size = new System.Drawing.Size(105, 36);
             this.btn_save_model.TabIndex = 9;
@@ -212,7 +216,7 @@ namespace LHON_Form
             // btn_load_model
             // 
             this.btn_load_model.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btn_load_model.Location = new System.Drawing.Point(146, 278);
+            this.btn_load_model.Location = new System.Drawing.Point(146, 282);
             this.btn_load_model.Name = "btn_load_model";
             this.btn_load_model.Size = new System.Drawing.Size(105, 36);
             this.btn_load_model.TabIndex = 10;
@@ -222,7 +226,7 @@ namespace LHON_Form
             // btn_redraw
             // 
             this.btn_redraw.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btn_redraw.Location = new System.Drawing.Point(257, 278);
+            this.btn_redraw.Location = new System.Drawing.Point(257, 282);
             this.btn_redraw.Name = "btn_redraw";
             this.btn_redraw.Size = new System.Drawing.Size(89, 36);
             this.btn_redraw.TabIndex = 11;
@@ -245,18 +249,18 @@ namespace LHON_Form
             this.label4.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.label4.AutoSize = true;
             this.label4.ForeColor = System.Drawing.Color.Maroon;
-            this.label4.Location = new System.Drawing.Point(34, 248);
+            this.label4.Location = new System.Drawing.Point(34, 252);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(136, 17);
+            this.label4.Size = new System.Drawing.Size(99, 17);
             this.label4.TabIndex = 19;
-            this.label4.Text = "Number of Neurons:";
+            this.label4.Text = "Num of Axons:";
             // 
             // lbl_n_Neurs
             // 
             this.lbl_n_Neurs.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.lbl_n_Neurs.AutoSize = true;
             this.lbl_n_Neurs.ForeColor = System.Drawing.Color.Maroon;
-            this.lbl_n_Neurs.Location = new System.Drawing.Point(168, 248);
+            this.lbl_n_Neurs.Location = new System.Drawing.Point(139, 252);
             this.lbl_n_Neurs.Name = "lbl_n_Neurs";
             this.lbl_n_Neurs.Size = new System.Drawing.Size(16, 17);
             this.lbl_n_Neurs.TabIndex = 18;
@@ -293,8 +297,6 @@ namespace LHON_Form
             this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.Controls.Add(this.btn_export);
             this.groupBox1.Controls.Add(this.chk_strict_rad);
-            this.groupBox1.Controls.Add(this.lbl_mdl_prog);
-            this.groupBox1.Controls.Add(this.label16);
             this.groupBox1.Controls.Add(this.tableLayoutPanel1);
             this.groupBox1.Controls.Add(this.btn_redraw);
             this.groupBox1.Controls.Add(this.btn_save_model);
@@ -303,7 +305,7 @@ namespace LHON_Form
             this.groupBox1.Controls.Add(this.lbl_n_Neurs);
             this.groupBox1.Location = new System.Drawing.Point(743, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(373, 320);
+            this.groupBox1.Size = new System.Drawing.Size(373, 324);
             this.groupBox1.TabIndex = 25;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Model";
@@ -311,9 +313,9 @@ namespace LHON_Form
             // btn_export
             // 
             this.btn_export.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.btn_export.Location = new System.Drawing.Point(277, 210);
+            this.btn_export.Location = new System.Drawing.Point(276, 222);
             this.btn_export.Name = "btn_export";
-            this.btn_export.Size = new System.Drawing.Size(69, 36);
+            this.btn_export.Size = new System.Drawing.Size(69, 34);
             this.btn_export.TabIndex = 35;
             this.btn_export.Text = "Export";
             this.btn_export.UseVisualStyleBackColor = true;
@@ -323,34 +325,12 @@ namespace LHON_Form
             this.chk_strict_rad.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.chk_strict_rad.AutoSize = true;
             this.chk_strict_rad.ForeColor = System.Drawing.SystemColors.HotTrack;
-            this.chk_strict_rad.Location = new System.Drawing.Point(31, 219);
+            this.chk_strict_rad.Location = new System.Drawing.Point(34, 222);
             this.chk_strict_rad.Name = "chk_strict_rad";
             this.chk_strict_rad.Size = new System.Drawing.Size(152, 21);
             this.chk_strict_rad.TabIndex = 34;
             this.chk_strict_rad.Text = "Strict Raduis Model";
             this.chk_strict_rad.UseVisualStyleBackColor = false;
-            // 
-            // lbl_mdl_prog
-            // 
-            this.lbl_mdl_prog.Anchor = System.Windows.Forms.AnchorStyles.Top;
-            this.lbl_mdl_prog.AutoSize = true;
-            this.lbl_mdl_prog.ForeColor = System.Drawing.Color.Maroon;
-            this.lbl_mdl_prog.Location = new System.Drawing.Point(318, 213);
-            this.lbl_mdl_prog.Name = "lbl_mdl_prog";
-            this.lbl_mdl_prog.Size = new System.Drawing.Size(13, 17);
-            this.lbl_mdl_prog.TabIndex = 21;
-            this.lbl_mdl_prog.Text = "-";
-            // 
-            // label16
-            // 
-            this.label16.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
-            this.label16.AutoSize = true;
-            this.label16.ForeColor = System.Drawing.Color.Maroon;
-            this.label16.Location = new System.Drawing.Point(233, 248);
-            this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(84, 17);
-            this.label16.TabIndex = 20;
-            this.label16.Text = "Model Prog:";
             // 
             // tableLayoutPanel1
             // 
@@ -535,7 +515,7 @@ namespace LHON_Form
             this.groupBox2.Controls.Add(this.btn_load_setts);
             this.groupBox2.Controls.Add(this.btn_save_setts);
             this.groupBox2.Controls.Add(this.tableLayoutPanel2);
-            this.groupBox2.Location = new System.Drawing.Point(743, 338);
+            this.groupBox2.Location = new System.Drawing.Point(743, 342);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(373, 195);
             this.groupBox2.TabIndex = 26;
@@ -703,15 +683,6 @@ namespace LHON_Form
             this.cmb_sw_sel1.Name = "cmb_sw_sel1";
             this.cmb_sw_sel1.Size = new System.Drawing.Size(79, 24);
             this.cmb_sw_sel1.TabIndex = 34;
-            // 
-            // txt_sw_range1
-            // 
-            this.txt_sw_range1.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.txt_sw_range1.Cue = "#itrs , start , end";
-            this.txt_sw_range1.Location = new System.Drawing.Point(274, 6);
-            this.txt_sw_range1.Name = "txt_sw_range1";
-            this.txt_sw_range1.Size = new System.Drawing.Size(110, 22);
-            this.txt_sw_range1.TabIndex = 24;
             // 
             // chk_save_sw_prog
             // 
@@ -1137,17 +1108,17 @@ namespace LHON_Form
             // 
             this.txt_status.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.txt_status.Location = new System.Drawing.Point(743, 539);
+            this.txt_status.Location = new System.Drawing.Point(759, 554);
             this.txt_status.Multiline = true;
             this.txt_status.Name = "txt_status";
             this.txt_status.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txt_status.Size = new System.Drawing.Size(373, 232);
+            this.txt_status.Size = new System.Drawing.Size(357, 217);
             this.txt_status.TabIndex = 31;
             // 
             // btn_clr
             // 
             this.btn_clr.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.btn_clr.Location = new System.Drawing.Point(1073, 539);
+            this.btn_clr.Location = new System.Drawing.Point(1073, 554);
             this.btn_clr.Name = "btn_clr";
             this.btn_clr.Size = new System.Drawing.Size(43, 27);
             this.btn_clr.TabIndex = 32;
@@ -1227,15 +1198,6 @@ namespace LHON_Form
             this.cmb_sw_sel2.Name = "cmb_sw_sel2";
             this.cmb_sw_sel2.Size = new System.Drawing.Size(79, 24);
             this.cmb_sw_sel2.TabIndex = 38;
-            // 
-            // txt_sw_range2
-            // 
-            this.txt_sw_range2.Anchor = System.Windows.Forms.AnchorStyles.None;
-            this.txt_sw_range2.Cue = "#itrs , start , end";
-            this.txt_sw_range2.Location = new System.Drawing.Point(274, 41);
-            this.txt_sw_range2.Name = "txt_sw_range2";
-            this.txt_sw_range2.Size = new System.Drawing.Size(110, 22);
-            this.txt_sw_range2.TabIndex = 39;
             // 
             // txt_min_first_r
             // 
@@ -1330,7 +1292,16 @@ namespace LHON_Form
 
         #endregion
 
-        private PictureBoxWithInterpolationMode picB;
+        // first_time
+        private PictureBox picB;
+        private TextBox txt_sw_range1;
+        private TextBox txt_sw_range2;
+
+        // comment on first_time
+        //private PictureBoxWithInterpolationMode picB;
+        //private CueTextBox txt_sw_range1;
+        //private CueTextBox txt_sw_range2;
+
         private System.Windows.Forms.Button btn_start;
         private Button btn_reset;
         private Button btn_save_model;
@@ -1380,7 +1351,6 @@ namespace LHON_Form
         private TextBox txt_status;
         private Button btn_clr;
         private ComboBox cmb_sw_sel1;
-        private CueTextBox txt_sw_range1;
         private Label label12;
         private Label lbl_image_siz;
         private CheckBox chk_rec_avi;
@@ -1390,8 +1360,6 @@ namespace LHON_Form
         private CheckBox chk_save_prog;
         private TextBox txt_vein_rad;
         private Label label15;
-        private Label lbl_mdl_prog;
-        private Label label16;
         private CheckBox chk_strict_rad;
         private Button btn_export;
         private TextBox txt_min_first_r;
@@ -1418,7 +1386,6 @@ namespace LHON_Form
         private Label label21;
         private Label label20;
         private ComboBox cmb_sw_sel2;
-        private CueTextBox txt_sw_range2;
         private TableLayoutPanel tableLayoutPanel14;
         private Label label22;
         private Label lbl_live_neur_perc;

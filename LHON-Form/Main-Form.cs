@@ -178,7 +178,7 @@ namespace LHON_Form
             alg_prof.report();
         }
 
-        // =============================== Copy from GPU to CPU and vice-versa
+        // ============= Copy from GPU to CPU and vice-versa ==================
 
         private void load_gpu_from_cpu()
         {
@@ -222,7 +222,7 @@ namespace LHON_Form
 
             gpu.Synchronize();
 
-            //Debug.WriteLine("GPU Free memory: " + 100.0 * (double)gpu.FreeMemory / (double)gpu.TotalMemory + " %\n");
+            Debug.WriteLine("GPU memory: " + 100.0 * (double)gpu.FreeMemory / (double)gpu.TotalMemory + " %\n");
         }
 
         private void load_cpu_from_gpu()
@@ -237,7 +237,7 @@ namespace LHON_Form
             gpu.CopyFromDevice(death_itr_dev, death_itr);
         }
 
-        // =============================== Helpers
+        // ================== Helpers  =======================
 
         private void kill_neur(int idx)
         {
@@ -276,16 +276,16 @@ namespace LHON_Form
 
         void mouse_click(int x, int y)
         {
-            if (sim_stat == sim_stat_enum.Running) return; //iteration != 0 || 
-                                                           // set the initial cell which dies
-
+            if (sim_stat == sim_stat_enum.Running) return;
+            
+            // Sets the initial insult location
             init_insult[0] = (float)x / setts.resolution - (mdl.nerve_r + nerve_clear);
             init_insult[1] = (float)y / setts.resolution - (mdl.nerve_r + nerve_clear);
 
             reset_state();
         }
 
-        // =============================== Reset State
+        // ==================== Reset State  =======================
 
         private void reset_state()
         {
@@ -293,7 +293,7 @@ namespace LHON_Form
                 Invoke(new Action(() => reset_state()));
             else
             {
-                // find first neur
+                // Identify first dying axon
                 int min_dis = 1000000000;
                 int iicx = (int)((init_insult[0] + mdl.nerve_r + nerve_clear) * setts.resolution);
                 int iicy = (int)((init_insult[1] + mdl.nerve_r + nerve_clear) * setts.resolution);
@@ -322,9 +322,7 @@ namespace LHON_Form
                         locked_pix[x, y] = locked_pix_init[x, y];
                     }
                 iteration = 0;
-
-                //btn_start.Text = "&Start";
-
+                
                 for (int i = 0; i < mdl.n_neurs; i++)
                 {
                     live_neur[i] = true;
@@ -362,331 +360,5 @@ namespace LHON_Form
 
             }
         }
-
-        // ============= Save Progress Image
-
-        private void Take_Progress_Snapshot(byte[,,] dest, uint frame)
-        {
-            if (InvokeRequired)
-                Invoke(new Action(() => Take_Progress_Snapshot(dest, frame)));
-            else
-            {
-                gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
-
-                gpu.Set(progression_image_sum_float_dev);
-                gpu.Set(progress_image_num_averaged_pix_dev);
-                gpu.Launch(block_s_r, thread_s_r).gpu_progress_image_1(tox_dev, locked_pix_dev, progression_image_sum_float_dev, progress_image_num_averaged_pix_dev, resolution_reduction_ratio);
-                gpu.Launch(new dim3(prog_im_siz, prog_im_siz), 1).gpu_progress_image_2(tox_dev, locked_pix_dev, progression_image_sum_float_dev, progress_image_num_averaged_pix_dev, progression_image_dev, prog_im_siz);
-
-                byte[,] progression_image = new byte[prog_im_siz, prog_im_siz];
-                gpu.CopyFromDevice(progression_image_dev, progression_image);
-                gpu.Synchronize();
-
-                for (int i = 0; i < prog_im_siz; i++)
-                    for (int j = 0; j < prog_im_siz; j++)
-                        dest[frame, i, j] = progression_image[i, j];
-                
-                //Rectangle bounds = picB.Bounds;
-                //var org = picB.PointToScreen(new Point(0, 0));
-
-                //using (Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height))
-                //{
-                //    using (Graphics g = Graphics.FromImage(bitmap))
-                //    {
-                //        g.CopyFromScreen(org, Point.Empty, bounds.Size);
-                //    }
-                //    string pth = @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".jpg";
-                //    bitmap.Save(pth, ImageFormat.Jpeg);
-                //}
-            }
-        }
-
-        private void Save_Progress(string progression_fil_name)
-        {
-            using (FileStream fileStream = new FileStream(progression_fil_name, FileMode.Append, FileAccess.Write, FileShare.None))
-            {
-                using (BinaryWriter writer = new BinaryWriter(fileStream))
-                {
-                    writer.Write(mdl.nerve_r);
-                    writer.Write(mdl.max_r);
-                    writer.Write(mdl.min_r);
-                    writer.Write(mdl.clearance);
-                    writer.Write(mdl.n_neurs);
-                    writer.Write(setts.resolution);
-                    writer.Write(setts.neur_tol_coeff);
-                    writer.Write(setts.neur_rate);
-                    writer.Write(im_size);
-                    writer.Write(prog_im_siz);
-
-                    writer.Write(init_insult[0]);
-                    writer.Write(init_insult[1]);
-                    writer.Write(progress_num_frames);
-                    writer.Write(tt_sim.read());
-                    writer.Write(last_itr);
-
-                    for (int m = 0; m < progress_num_frames; m++)
-                        writer.Write(areal_progress_chron_val[m]);
-
-                    for (int m = 0; m < progress_num_frames; m++)
-                        writer.Write(chron_progress_areal_val[m]);
-
-                    gpu.CopyFromDevice(death_itr_dev, death_itr);
-
-                    for (int m = 0; m < mdl.n_neurs; m++)
-                    {
-                        float x = (mdl.neur_cor[m][0] / mdl.nerve_r / 2 + 0.5F) * 256F;
-                        writer.Write((byte)(x));
-                        float y = (mdl.neur_cor[m][1] / mdl.nerve_r / 2 + 0.5F) * 256F;
-                        writer.Write((byte)(y));
-                        writer.Write((byte)(mdl.neur_cor[m][2] * 40));
-                        float r = (float)death_itr[m] / (float)last_itr * 256F;
-                        writer.Write((byte)(r));
-                    }
-
-                    for (int m = 0; m < progress_num_frames; m++)
-                        for (int i = 0; i < prog_im_siz; i++)
-                            for (int j = 0; j < prog_im_siz; j++)
-                                writer.Write(areal_progression_image_stack[m, i, j]);
-
-                    for (int m = 0; m < progress_num_frames; m++)
-                        for (int i = 0; i < prog_im_siz; i++)
-                            for (int j = 0; j < prog_im_siz; j++)
-                                writer.Write(chron_progression_image_stack[m, i, j]);
-
-                    writer.Flush();
-
-                    //append_stat_ln("Sim Progress saved to " + progression_fil_name);
-
-                }
-            }
-        }
-
-        // ================ Mouse Drawing =======================
-
-        bool _mousePressed = false;
-        private void picB_MouseDown(object sender, MouseEventArgs e) { _mousePressed = true; }
-        private void picB_MouseUp(object sender, MouseEventArgs e) { _mousePressed = false; }
-        private void picB_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (_mousePressed) { } // Debug.WriteLine("dragging");
-        }
-
-        // =======================================
-
-        private void btn_sweep_Click(object sender, EventArgs e)
-        {
-
-            if (sweep_is_running)
-            {
-                stop_sweep_req = true;
-                stop_sim(sim_stat_enum.Paused);
-                btn_sweep.Text = "S&weep";
-                append_stat_ln("Sweeping Terminated by User!");
-            }
-            else sweep();
-        }
-
-        enum param_select
-        {
-            Repeat,
-            Nerve_Rad,
-            Min_Rad,
-            Max_Rad,
-            Clearance,
-            Resolution,
-            Tolerance,
-            Neur_Rate,
-            Insult_Rad,
-            Insult_Peri
-        };
-
-        async void sweep()
-        {
-            if (sim_stat == sim_stat_enum.Running) return;
-
-            try
-            {
-                int delay_ms = 2000;
-
-                int sweep_repetitions1, sweep_repetitions2 = 0;
-                float start1 = 0, end1 = 0;
-                float start2 = 0, end2 = 0;
-                int selection1 = cmb_sw_sel1.SelectedIndex;
-                int selection2 = cmb_sw_sel2.SelectedIndex;
-
-                // Get first dimension of sweep
-                try
-                {
-                    string[] values = txt_sw_range1.Text.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                    sweep_repetitions1 = int.Parse(values[0]);
-                    if (selection1 > 0)
-                    {
-                        start1 = float.Parse(values[1]);
-                        if (sweep_repetitions1 > 1) end1 = float.Parse(values[2]);
-                    }
-                }
-                catch
-                {
-                    MessageBox.Show("Not enough or bad input for Sweep command!");
-                    return;
-                }
-                // Get Second dimension
-                try
-                {
-                    string[] values = txt_sw_range2.Text.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                    sweep_repetitions2 = int.Parse(values[0]);
-                    if (selection2 > 0)
-                    {
-                        start2 = float.Parse(values[1]);
-                        if (sweep_repetitions2 > 1) end2 = float.Parse(values[2]);
-                    }
-                }
-                catch { }
-
-                btn_sweep.Text = "S&top";
-                sweep_is_running = true;
-
-                string parameter_name1 = cmb_sw_sel1.Items[selection1].ToString();
-                string parameter_name2 = cmb_sw_sel2.Items[selection2].ToString();
-
-                int failures = 0;
-                string dir_name = null;
-
-                for (int i1 = 0; i1 < sweep_repetitions1; i1++)
-                {
-                    float val1 = sweep_upd_param((param_select)selection1, start1, end1, i1, sweep_repetitions1);
-                    float val2 = 0;
-                    append_stat_ln(parameter_name1 + " : " + val1.ToString());
-
-                    bool regenerate_model = selection1 < (int)param_select.Resolution;
-                    int i2 = 0;
-                    do
-                    {
-                        if (sweep_repetitions2 > 0)
-                        {
-                            val2 = sweep_upd_param((param_select)selection2, start2, end2, i2, sweep_repetitions2);
-                            append_stat_ln(parameter_name2 + " : " + val2.ToString());
-                        }
-                        update_mdl_and_setts_ui();
-
-                        if (regenerate_model || (sweep_repetitions2 > 0 && selection2 < (int)param_select.Resolution))
-                        {
-                            regenerate_model = false;
-                            // Regenerate Model
-                            new_model_worker.RunWorkerAsync();
-                            await Task.Delay(delay_ms);
-                            while (sim_stat == sim_stat_enum.Running)
-                            {
-                                await Task.Delay(delay_ms);
-                                if (stop_sweep_req) { stop_sweep_req = false; sweep_is_running = false; return; }
-                            }
-                        }
-                        else
-                            preprocess_model();
-
-                        start_sim();
-                        //Debug.WriteLine("simulation should've been started" + sim_stat);
-                        while (sim_stat != sim_stat_enum.Successful && sim_stat != sim_stat_enum.Failed)
-                        {
-                            await Task.Delay(delay_ms);
-                            if (stop_sweep_req) { stop_sweep_req = false; sweep_is_running = false; return; }
-                        }
-                        await Task.Delay(delay_ms / 5);
-
-                        if (sim_stat == sim_stat_enum.Failed) failures++;
-                        else // Successful
-                        if (chk_save_sw_prog.Checked)
-                        {
-                            if (dir_name == null)
-                            {
-                                string par_nam = "(" + parameter_name1 + ")";
-                                if (sweep_repetitions2 > 0)
-                                    par_nam += "(" + parameter_name2 + ")";
-                                dir_name = string.Format("Progression\\{0} {1}", DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss"), par_nam);
-                                Directory.CreateDirectory(dir_name);
-                            }
-                            string par_val;
-                            if ((param_select)selection1 == param_select.Repeat)
-                                par_val = val1.ToString("(00)");
-                            else
-                                par_val = val1.ToString("(0.00)");
-                            if (sweep_repetitions2 > 0)
-                                if ((param_select)selection2 == param_select.Repeat)
-                                    par_val += val2.ToString("(00)");
-                                else
-                                    par_val += val2.ToString("(0.00)");
-                            Save_Progress(string.Format("{0}\\{1}.prgim", dir_name, par_val));
-                        }
-                        i2++;
-                    }
-                    while (i2 < sweep_repetitions2);
-                }
-
-                append_stat_ln(string.Format("Sweeping finished after {0} repetitions and {1} failure(s).", (sweep_repetitions2 > 0 ? sweep_repetitions2 * sweep_repetitions1 : sweep_repetitions1).ToString(), failures > 0 ? failures.ToString() : "no"));
-                sweep_is_running = false;
-                btn_sweep.Text = "S&weep";
-            }
-            catch (Exception e)
-            {
-                MessageBox.Show(e.ToString());
-            }
-        }
-
-        float sweep_upd_param(param_select selection, float start, float end, int i, int sweep_repetitions)
-        {
-            float sig = end < start ? -1 : 1;
-            float step_siz;
-            if (selection == 0 || sweep_repetitions == 1) step_siz = 1;
-            else step_siz = Math.Abs(end - start) / (float)(sweep_repetitions - 1);
-            float val = start + sig * step_siz * i;
-
-            switch (selection)
-            {
-                case param_select.Nerve_Rad:
-                    mdl.nerve_r = val;
-                    break;
-                case param_select.Min_Rad:
-                    mdl.min_r = val;
-                    break;
-                case param_select.Max_Rad:
-                    mdl.max_r = val;
-                    break;
-                case param_select.Clearance:
-                    mdl.clearance = val;
-                    break;
-                case param_select.Resolution:
-                    setts.resolution = val;
-                    break;
-                case param_select.Tolerance:
-                    setts.neur_tol_coeff = val;
-                    break;
-                case param_select.Neur_Rate:
-                    setts.neur_rate = val;
-                    break;
-                case param_select.Insult_Rad:
-                    init_insult[0] = mdl.nerve_r * (val * 2 - 1);
-                    init_insult[1] = 0;
-                    break;
-                case param_select.Insult_Peri:
-                    init_insult[0] = -mdl.nerve_r * (float)Math.Cos(val * Math.PI / 180);
-                    init_insult[1] = -mdl.nerve_r * (float)Math.Sin(val * Math.PI / 180);
-                    break;
-            }
-            return val;
-        }
-
-        void Export_model() // no death info, text file
-        {
-            string path = @"Exported\" + DateTime.Now.ToString("yyyy - MM - dd @HH - mm - ss") + ".txt";
-            using (StreamWriter file = new StreamWriter(path, true))
-            {
-                file.WriteLine("{0}, {1}, {2}", mdl.nerve_r, mdl.vein_rat, mdl.clearance);
-                for (int i = 0; i < mdl.n_neurs; i++)
-                    file.WriteLine("{0}, {1}, {2}", mdl.neur_cor[i][0], mdl.neur_cor[i][1], mdl.neur_cor[i][2]);
-            }
-            append_stat_ln("Model exported to " + path);
-        }
-
     }
 }
-

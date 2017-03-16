@@ -124,7 +124,6 @@ namespace LHON_Form
                     task_id = t + neurs_inside_pix_idx[n];
                     while (task_id < neurs_inside_pix_idx[n + 1])
                     {
-
                         locked_pix[neurs_inside_pix[task_id, 0], neurs_inside_pix[task_id, 1]]--;
                         task_id += stride;
                     }

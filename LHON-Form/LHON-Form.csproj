@@ -84,6 +84,9 @@
     <Compile Include="Cuda_Funcs.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="file_interface.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="GUI.cs">
       <SubType>Form</SubType>
@@ -92,6 +95,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="preprocess.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="sweep.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Vars.cs">

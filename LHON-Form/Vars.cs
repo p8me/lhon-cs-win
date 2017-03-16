@@ -30,12 +30,13 @@ namespace LHON_Form
         string avi_file;
         VideoStream aviStream;
 
-        float real_model_nerve_r = 750; // um
-        int real_model_num_neurs = 1200000;
+        // Used as measure of comparison
+        const float real_model_nerve_r = 750; // um
+        const int real_model_num_neurs = 1200000;
         
         int first_neur_idx = 0;
 
-        int max_set_size_bound, max_set_size_bound_touch, mean_num_pix_inside_neur;
+        int max_set_size_bound, max_set_size_bound_touch;
 
         Bitmap bmp;
         int im_size;
@@ -62,9 +63,7 @@ namespace LHON_Form
 
         float[,] progression_image_sum_float_dev;
         uint[,] progress_image_num_averaged_pix_dev;
-
-        string progress_fil_name;
-
+        
         float areal_progress_lim;
 
         bool stop_sweep_req = false, sweep_is_running = false;
@@ -152,7 +151,7 @@ namespace LHON_Form
         uint last_itr;
         float last_areal_prog;
 
-        // =============== Profile Class
+        // =============== Profiling Class =============
 
         class profile_class
         {
@@ -185,7 +184,7 @@ namespace LHON_Form
 
 
 
-        // ================ Basic Functions
+        // ======= Basic Math Functions =========
 
         private float Maxf(float v1, float v2)
         {
@@ -214,7 +213,7 @@ namespace LHON_Form
             return rc * rc - (dx * dx + dy * dy);
         }
 
-        //====================
+        // ========== tic toc ==========
 
         Stopwatch sw = new Stopwatch();
         void tic()

@@ -498,12 +498,14 @@ namespace LHON_Form
 
         private void picB_Paint(object sender, PaintEventArgs e)
         {
-            // the X on the first neuron
+            
             if (neur_lbl != null)
             {
+                // the X on the first neuron
                 var nlbl0 = neur_lbl[first_neur_idx];
                 SizeF textSize0 = e.Graphics.MeasureString(nlbl0.lbl, this.Font);
                 e.Graphics.DrawString(nlbl0.lbl, this.Font, Brushes.Beige, nlbl0.x * picB_ratio + picB_offx - (textSize0.Width / 2), nlbl0.y * picB_ratio + picB_offy - (textSize0.Height / 2));
+
                 if (chk_neur_lvl.Checked)
                     for (int i = 0; i < mdl.n_neurs; i++)
                     {
@@ -538,12 +540,21 @@ namespace LHON_Form
                 int x = (int)((mouseEventArgs.X - picB_offx) / picB_ratio);
                 int y = (int)((mouseEventArgs.Y - picB_offy) / picB_ratio);
                 if (x >= 0 && x < im_size && y >= 0 && y < im_size)
-                {
-                    mouse_click(x, y);
-                    //Debug.WriteLine("X= " + x + " Y= " + y);
-                }
+                    mouse_click(x, y); //Debug.WriteLine("X= " + x + " Y= " + y);
             }
         }
+
+
+        // ================ Mouse Drawing =======================
+
+        bool _mousePressed = false;
+        private void picB_MouseDown(object sender, MouseEventArgs e) { _mousePressed = true; }
+        private void picB_MouseUp(object sender, MouseEventArgs e) { _mousePressed = false; }
+        private void picB_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (_mousePressed) { } // Debug.WriteLine("dragging");
+        }
+
     }
 }
 

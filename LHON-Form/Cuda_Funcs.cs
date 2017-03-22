@@ -25,7 +25,7 @@ namespace LHON_Form
 {
     public partial class Main_Form : Form
     {
-        GPGPU gpu;
+        volatile GPGPU gpu;
         bool recompile_cuda = false;
 
         public bool init_gpu()
@@ -56,41 +56,33 @@ namespace LHON_Form
             }
             gpu.LoadModule(km);
 
+            
+
             return false;
         }
 
-        [Cudafy]
-        public static void gpu_check_neur_overlap(GThread thread, float[,] tox, int x0, int y0, int xc, int yc, int rc_clear2, int[] overlaps)
-        {
-            int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x + x0;
-            int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y + y0;
+        //[CudafyDummy]
+        //public static void cuda_update_live_neurs(int im_size,
+        //    int n_neurs, float[,] tox, float[,] rate, float[,] detox, bool[] live_neur, int[] num_live_neur,
+        //    float[] tox_touch_neur, float[] neur_tol, int[,,] axons_bound_touch_pix, int[] axons_bound_touch_npix,
+        //    ushort[,] axons_inside_pix, int[] axons_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr){ }
 
-            float dx = x - xc;
-            float dy = y - yc;
-            if (rc_clear2 - (dx * dx + dy * dy) > 0)
-                if (tox[x, y] > 0)
-                    thread.atomicAdd(ref overlaps[0], 1);
-        }
+        [CudafyDummy]
+        public static void cuda_calc_diff(int im_size,
+            float[,] tox, float[,] rate, uint[,] locked_pix, float[,] diff)
+        { }
+        [CudafyDummy]
+        public static void cuda_calc_tox(int im_size,
+            float[,] tox, float[,] rate, float[,] detox, uint[,] locked_pix, float[,] diff){ }
 
-        [Cudafy]
-        public static void gpu_check_neur_overlap_2(GThread thread, float[,] tox, int x0, int y0, int xc, int yc, int rc_clear2, int[] overlaps)
-        {
-            int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x + x0;
-            int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y + y0;
 
-            if (overlaps[0] == 0)
-            {
-                float dx = x - xc;
-                float dy = y - yc;
-                if (rc_clear2 - (dx * dx + dy * dy) > 0)
-                    tox[x, y] = 1;
-            }
-        }
 
         [Cudafy]
-        // Updates: tox_touch_neur, rate, locked_pix and live_neur
-        public static void gpu_update_live_neurs(GThread thread, int n_neurs, float[,] tox, float[,] rate, bool[] live_neur, int[] num_live_neur, float[] tox_touch_neur, float[] neur_tol, int[,,] neurs_bound_touch_pix, int[] neurs_bound_touch_npix,
-            ushort[,] neurs_inside_pix, int[] neurs_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr)
+        // ======================================================================
+        // Updates: tox_touch_neur, rate, detox, locked_pix and live_neur
+        public static void gpu_update_live_neurs(GThread thread,
+            int n_neurs, float[,] tox, float[,] rate, float[,] detox, bool[] live_neur, int[] num_live_neur, float[] tox_touch_neur, float[] neur_tol, int[,,] axons_bound_touch_pix, int[] axons_bound_touch_npix,
+            ushort[,] axons_inside_pix, int[] axons_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr)
         {
             int t = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
             int stride = thread.blockDim.x * thread.gridDim.x;
@@ -108,10 +100,10 @@ namespace LHON_Form
                 if (live_neur[n])
                 {
                     task_id = t;
-                    while (task_id < neurs_bound_touch_npix[n])
+                    while (task_id < axons_bound_touch_npix[n])
                     {
-                        if (locked_pix[neurs_bound_touch_pix[n, task_id, 0], neurs_bound_touch_pix[n, task_id, 1]] == 0)
-                            thread.atomicAdd(ref tox_touch_neur[n], tox[neurs_bound_touch_pix[n, task_id, 0], neurs_bound_touch_pix[n, task_id, 1]]);
+                        if (locked_pix[axons_bound_touch_pix[n, task_id, 0], axons_bound_touch_pix[n, task_id, 1]] == 0)
+                            thread.atomicAdd(ref tox_touch_neur[n], tox[axons_bound_touch_pix[n, task_id, 0], axons_bound_touch_pix[n, task_id, 1]]);
                         task_id += stride;
                     }
                 }
@@ -121,10 +113,12 @@ namespace LHON_Form
             {
                 if (tox_touch_neur[n] > neur_tol[n])
                 {
-                    task_id = t + neurs_inside_pix_idx[n];
-                    while (task_id < neurs_inside_pix_idx[n + 1])
+                    // kill neuron/axon
+                    task_id = t + axons_inside_pix_idx[n];
+                    while (task_id < axons_inside_pix_idx[n + 1])
                     {
-                        locked_pix[neurs_inside_pix[task_id, 0], neurs_inside_pix[task_id, 1]]--;
+                        locked_pix[axons_inside_pix[task_id, 0], axons_inside_pix[task_id, 1]] -= 1;
+                        detox[axons_inside_pix[task_id, 0], axons_inside_pix[task_id, 1]] = 0;
                         task_id += stride;
                     }
                     if (t == 0)
@@ -138,8 +132,10 @@ namespace LHON_Form
         }
 
         [Cudafy]
+        // ======================================================================
         // Updates: diff
-        public static void gpu_calc_diff(GThread thread, float[,] tox, float[,] rate, uint[,] locked_pix, float[,] diff)
+        public static void gpu_calc_diff(GThread thread,
+            float[,] tox, float[,] rate, uint[,] locked_pix, float[,] diff)
         {
             int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x;
             int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y;
@@ -163,17 +159,34 @@ namespace LHON_Form
                 tox[x, y] = (1 - tox_giving_away_port) * tox[x, y];
             }
         }
-
+        
         [Cudafy]
+        // ======================================================================
         // Updates: tox
-        public static void gpu_calc_tox(GThread thread, float[,] tox, float[,] rate, uint[,] locked_pix, float[,] diff)
+        public static void gpu_calc_tox(GThread thread,
+            float[,] tox, float[,] rate, float[,] detox, uint[,] locked_pix, float[,] diff)
         {
             int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x;
             int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y;
 
-            if (locked_pix[x, y] == 0 && rate[x, y] > 0)
-                tox[x, y] += diff[x, y];
+            if (locked_pix[x, y] == 0)
+            {
+                if (rate[x, y] > 0) tox[x, y] += diff[x, y];
+                if (tox[x, y] > 0) tox[x, y] -= detox[x, y];
+            }
         }
+
+        [Cudafy]
+        // ======================================================================
+        public static void gpu_calc_neur_state(GThread thread)
+        {
+
+        }
+
+
+        // ======================================================================
+        //    Secondary Functions (for recording information or verification)
+        // ======================================================================
 
         [Cudafy]
         public static void gpu_areal_progress(GThread thread, float[,] tox, uint[,] locked_pix, float[] progress, float lim)
@@ -236,3 +249,38 @@ namespace LHON_Form
         }
     }
 }
+
+
+/*
+ 
+    [Cudafy]
+        public static void gpu_check_neur_overlap(GThread thread, float[,] tox, int x0, int y0, int xc, int yc, int rc_clear2, int[] overlaps)
+        {
+            int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x + x0;
+            int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y + y0;
+
+            float dx = x - xc;
+            float dy = y - yc;
+            if (rc_clear2 - (dx * dx + dy * dy) > 0)
+                if (tox[x, y] > 0)
+                    thread.atomicAdd(ref overlaps[0], 1);
+        }
+
+
+    [Cudafy]
+        public static void gpu_check_neur_overlap_2(GThread thread, float[,] tox, int x0, int y0, int xc, int yc, int rc_clear2, int[] overlaps)
+        {
+            int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x + x0;
+            int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y + y0;
+
+            if (overlaps[0] == 0)
+            {
+                float dx = x - xc;
+                float dy = y - yc;
+                if (rc_clear2 - (dx * dx + dy * dy) > 0)
+                    tox[x, y] = 1;
+            }
+        }
+
+
+ */

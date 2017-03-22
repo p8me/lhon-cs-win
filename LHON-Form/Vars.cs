@@ -21,6 +21,7 @@ using Cudafy.Atomics;
 using Cudafy.Translator;
 using System.Runtime.InteropServices;
 
+
 namespace LHON_Form
 {
     public partial class Main_Form : Form
@@ -33,7 +34,9 @@ namespace LHON_Form
         // Used as measure of comparison
         const float real_model_nerve_r = 750; // um
         const int real_model_num_neurs = 1200000;
-        
+
+        const float detox_val = 0.01F;
+
         int first_neur_idx = 0;
 
         int max_set_size_bound, max_set_size_bound_touch;
@@ -47,6 +50,7 @@ namespace LHON_Form
             show_opts_dev = new bool[2];
 
         float[,] tox, tox_init, tox_dev;
+        
         uint[,] locked_pix, locked_pix_dev, locked_pix_init;
 
         float sum_tox, areal_progress, chron_progress;
@@ -71,23 +75,23 @@ namespace LHON_Form
         float[,] diff_dev;
         float[] sum_tox_dev, progress_dev;
 
-        float[,] rate, rate_init,
-            rate_dev;
+        float[,] rate, rate_init, detox, detox_init,
+            rate_dev, detox_dev;
 
-        UInt16[,] touch_pix,
+        ushort[,] touch_pix,
             touch_pix_dev;
 
         uint iteration = 0;
 
-        float[,] neurs_coor;
+        float[,] axons_coor;
 
-        ushort[,] neurs_inside_pix, neurs_inside_pix_dev;
-        int[] neurs_inside_pix_idx, neurs_inside_pix_idx_dev;
+        ushort[,] axons_inside_pix, axons_inside_pix_dev;
+        int[] axons_inside_pix_idx, axons_inside_pix_idx_dev;
 
-        int[,,] neurs_bound_touch_pix, neurs_bound_touch_pix_dev;
+        int[,,] axons_bound_touch_pix, axons_bound_touch_pix_dev;
 
-        uint[] neurs_inside_npix, neurs_bound_touch_npix, death_itr,
-            neurs_inside_npix_dev, neurs_bound_touch_npix_dev, death_itr_dev;
+        uint[] axons_inside_npix, axons_bound_touch_npix, death_itr,
+            axons_inside_npix_dev, axons_bound_touch_npix_dev, death_itr_dev;
 
         bool[] live_neur,
             live_neur_dev;
@@ -105,8 +109,11 @@ namespace LHON_Form
 
         float[] init_insult = new float[2] { 0, 0 };
 
-        const int Block_Size = 12;
-        dim3 block_s_r, thread_s_r;
+        const int threads_per_block_1D = 8;
+
+        //int round_block_siz(int siz){return siz / Block_Size * Block_Size;}
+
+        dim3 blocks_per_grid, threads_per_block;
         byte[,,] bmp_dev;
         
         enum sim_stat_enum { None, Running, Paused, Successful, Failed };
@@ -155,16 +162,22 @@ namespace LHON_Form
 
         class profile_class
         {
-            double[] T = new double[100];
+            const int max = 100;
+            double[] T = new double[max];
+            int[] num_occur = new int[max];
             Stopwatch sw = Stopwatch.StartNew();
             Stopwatch sw_tot = Stopwatch.StartNew();
             public void time(int idx) // Pass 0 start of main program to start tot_time
             {
                 if (idx > 0)
+                {
                     T[idx] += sw.Elapsed.TotalMilliseconds;
+                    num_occur[idx]++;
+                }
                 else if (idx == 0)
                 {
-                    Array.Clear(T, 0, T.Length);
+                    Array.Clear(T, 0, max);
+                    Array.Clear(num_occur, 0, max);
                     sw_tot = Stopwatch.StartNew();
                 }
                 sw = Stopwatch.StartNew(); // Pass negative to reset only sw
@@ -174,10 +187,10 @@ namespace LHON_Form
                 sw_tot.Stop();
                 sw.Stop();
                 double tot_time = sw_tot.Elapsed.TotalMilliseconds;
-                Debug.WriteLine("Total: " + (tot_time / 1000).ToString("0.0") + "s");
+                Debug.WriteLine("Total: " + (tot_time / 1000).ToString("0.000") + "s");
                 for (int k = 0; k < T.Length; k++)
                     if (T[k] > 0)
-                        Debug.WriteLine("{0}: {1} % ({2}ms)", k, (T[k] / tot_time * 100).ToString("0.0"), T[k].ToString("0"));
+                        Debug.WriteLine("{0}:\t{1}%\t{2}ms\t{3}K >> {4}ms", k, (T[k] / tot_time * 100).ToString("00.0"), T[k].ToString("000000"), (num_occur[k]).ToString("0000"), (T[k]/num_occur[k]).ToString("000.000"));
             }
         }
         profile_class gpu_prof = new profile_class(), alg_prof = new profile_class();
@@ -205,7 +218,7 @@ namespace LHON_Form
         {
             return (v1 < v2) ? v1 : v2;
         }
-
+        
         private float within_circle2(int x, int y, float xc, float yc, float rc)
         {
             float dx = x - xc;

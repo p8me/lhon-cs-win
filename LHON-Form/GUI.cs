@@ -38,7 +38,16 @@ namespace LHON_Form
             chk_show_tox.CheckedChanged += (o, e) => update_show_opts();
             btn_reset.Click += (s, e) =>
             {
-                if (sim_stat == sim_stat_enum.Running) return;
+                if (rate == null)
+                {
+                    append_stat_ln("You must preprocess the model before resetting the state.\n");
+                    return;
+                }
+                if (sim_stat == sim_stat_enum.Running)
+                {
+                    append_stat_ln("You must stop the simulation before resetting the states.\n");
+                    return;
+                }
                 reset_state(); set_btn_start_txt("&Start");
             };
 
@@ -120,6 +129,11 @@ namespace LHON_Form
 
         void start_sim()
         {
+            if (rate == null)
+            {
+                append_stat_ln("You must preprocess the model before running simulation.\n");
+                return;
+            }
             if (sim_stat == sim_stat_enum.None || sim_stat == sim_stat_enum.Paused)
             {
                 sim_stat = sim_stat_enum.Running;
@@ -405,7 +419,7 @@ namespace LHON_Form
             if (reload_tox_dev)
             {
                 gpu.CopyToDevice(tox, tox_dev);
-                gpu.Launch(block_s_r, thread_s_r).gpu_fill_bmp(tox_dev, bmp_dev, show_opts_dev, touch_pix_dev);
+                gpu.Launch(blocks_per_grid, threads_per_block).gpu_fill_bmp(tox_dev, bmp_dev, show_opts_dev, touch_pix_dev);
                 gpu.CopyFromDevice(bmp_dev, bmp_bytes);
             }
 
@@ -498,7 +512,7 @@ namespace LHON_Form
 
         private void picB_Paint(object sender, PaintEventArgs e)
         {
-            
+
             if (neur_lbl != null)
             {
                 // the X on the first neuron
@@ -558,41 +572,3 @@ namespace LHON_Form
     }
 }
 
-class CueTextBox : TextBox
-{
-    [Localizable(true)]
-    public string Cue
-    {
-        get { return mCue; }
-        set { mCue = value; updateCue(); }
-    }
-
-    private void updateCue()
-    {
-        if (this.IsHandleCreated && mCue != null)
-        {
-            SendMessage(this.Handle, 0x1501, (IntPtr)1, mCue);
-        }
-    }
-    protected override void OnHandleCreated(EventArgs e)
-    {
-        base.OnHandleCreated(e);
-        updateCue();
-    }
-    private string mCue;
-
-    // PInvoke
-    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-    private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wp, string lp);
-}
-
-class PictureBoxWithInterpolationMode : PictureBox
-{
-    public InterpolationMode InterpolationMode { get; set; }
-
-    protected override void OnPaint(PaintEventArgs paintEventArgs)
-    {
-        paintEventArgs.Graphics.InterpolationMode = InterpolationMode;
-        base.OnPaint(paintEventArgs);
-    }
-}

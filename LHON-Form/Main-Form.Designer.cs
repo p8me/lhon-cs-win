@@ -1,11 +1,12 @@
 ﻿using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using CustomControls;
 
 namespace LHON_Form
 {
     partial class Main_Form
     {
-        bool first_compile = true;
+        const bool first_compile = true;
 
         /// <summary>
         /// Required designer variable.
@@ -34,9 +35,9 @@ namespace LHON_Form
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main_Form));
-            this.picB = new System.Windows.Forms.PictureBox();
-            this.txt_sw_range1 = new System.Windows.Forms.TextBox();
-            this.txt_sw_range2 = new System.Windows.Forms.TextBox();
+            this.picB = new CustomControls.PictureBoxWithInterpolationMode();
+            this.txt_sw_range1 = new CustomControls.CueTextBox();
+            this.txt_sw_range2 = new CustomControls.CueTextBox();
             this.btn_start = new System.Windows.Forms.Button();
             this.btn_reset = new System.Windows.Forms.Button();
             this.btn_save_model = new System.Windows.Forms.Button();
@@ -154,6 +155,7 @@ namespace LHON_Form
             this.picB.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.picB.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             this.picB.Location = new System.Drawing.Point(16, 196);
             this.picB.Name = "picB";
             this.picB.Size = new System.Drawing.Size(721, 529);
@@ -170,6 +172,7 @@ namespace LHON_Form
             // txt_sw_range1
             // 
             this.txt_sw_range1.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txt_sw_range1.Cue = null;
             this.txt_sw_range1.Location = new System.Drawing.Point(274, 6);
             this.txt_sw_range1.Name = "txt_sw_range1";
             this.txt_sw_range1.Size = new System.Drawing.Size(110, 22);
@@ -178,6 +181,7 @@ namespace LHON_Form
             // txt_sw_range2
             // 
             this.txt_sw_range2.Anchor = System.Windows.Forms.AnchorStyles.None;
+            this.txt_sw_range2.Cue = null;
             this.txt_sw_range2.Location = new System.Drawing.Point(274, 41);
             this.txt_sw_range2.Name = "txt_sw_range2";
             this.txt_sw_range2.Size = new System.Drawing.Size(110, 22);
@@ -230,7 +234,7 @@ namespace LHON_Form
             this.btn_redraw.Name = "btn_redraw";
             this.btn_redraw.Size = new System.Drawing.Size(89, 36);
             this.btn_redraw.TabIndex = 11;
-            this.btn_redraw.Text = "Redraw";
+            this.btn_redraw.Text = "Generate";
             this.btn_redraw.UseVisualStyleBackColor = true;
             // 
             // chk_neur_lvl
@@ -551,7 +555,7 @@ namespace LHON_Form
             this.btn_preprocess.Name = "btn_preprocess";
             this.btn_preprocess.Size = new System.Drawing.Size(89, 36);
             this.btn_preprocess.TabIndex = 29;
-            this.btn_preprocess.Text = "Update";
+            this.btn_preprocess.Text = "Preprocess";
             this.btn_preprocess.UseVisualStyleBackColor = true;
             // 
             // btn_load_setts
@@ -1291,16 +1295,10 @@ namespace LHON_Form
         }
 
         #endregion
-
-        // first_time
-        private PictureBox picB;
-        private TextBox txt_sw_range1;
-        private TextBox txt_sw_range2;
-
-        // comment on first_time
-        //private PictureBoxWithInterpolationMode picB;
-        //private CueTextBox txt_sw_range1;
-        //private CueTextBox txt_sw_range2;
+        
+        private PictureBoxWithInterpolationMode picB;
+        private CueTextBox txt_sw_range1;
+        private CueTextBox txt_sw_range2;
 
         private System.Windows.Forms.Button btn_start;
         private Button btn_reset;

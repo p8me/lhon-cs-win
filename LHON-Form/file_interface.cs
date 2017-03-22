@@ -39,7 +39,7 @@ namespace LHON_Form
 
                 gpu.Set(progression_image_sum_float_dev);
                 gpu.Set(progress_image_num_averaged_pix_dev);
-                gpu.Launch(block_s_r, thread_s_r).gpu_progress_image_1(tox_dev, locked_pix_dev, progression_image_sum_float_dev, progress_image_num_averaged_pix_dev, resolution_reduction_ratio);
+                gpu.Launch(blocks_per_grid, threads_per_block).gpu_progress_image_1(tox_dev, locked_pix_dev, progression_image_sum_float_dev, progress_image_num_averaged_pix_dev, resolution_reduction_ratio);
                 gpu.Launch(new dim3(prog_im_siz, prog_im_siz), 1).gpu_progress_image_2(tox_dev, locked_pix_dev, progression_image_sum_float_dev, progress_image_num_averaged_pix_dev, progression_image_dev, prog_im_siz);
 
                 byte[,] progression_image = new byte[prog_im_siz, prog_im_siz];

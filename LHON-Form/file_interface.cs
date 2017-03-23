@@ -59,7 +59,7 @@ namespace LHON_Form
                 //    {
                 //        g.CopyFromScreen(org, Point.Empty, bounds.Size);
                 //    }
-                //    string pth = @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".jpg";
+                //    string pth = ProjectOutputDir + @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".jpg";
                 //    bitmap.Save(pth, ImageFormat.Jpeg);
                 //}
             }
@@ -130,7 +130,7 @@ namespace LHON_Form
 
         void Export_model() // no death info, text file
         {
-            string path = @"Exported\" + DateTime.Now.ToString("yyyy - MM - dd @HH - mm - ss") + ".txt";
+            string path = ProjectOutputDir + @"Exported\" + DateTime.Now.ToString("yyyy - MM - dd @HH - mm - ss") + ".txt";
             using (StreamWriter file = new StreamWriter(path, true))
             {
                 file.WriteLine("{0}, {1}, {2}", mdl.nerve_r, mdl.vein_rat, mdl.clearance);

@@ -56,91 +56,29 @@ namespace LHON_Form
             }
             gpu.LoadModule(km);
 
-            
-
             return false;
         }
 
         // ==================================================================
-        //                          Preprocess
+        //                          Dummy functions
         // ==================================================================
 
-        [Cudafy]
-        public static void gpu_proprocess_1(GThread thread)
-        {
-
-        }
         [CudafyDummy]
-        public static void cuda_update_live_neurs(int im_size,
+        public static void cuda_update_live(int im_size,
             int n_neurs, float[,] tox, float[,] rate, float[,] detox, bool[] live_neur, int[] num_live_neur,
             float[] tox_touch_neur, float[] neur_tol, int[,,] axons_bound_touch_pix, int[] axons_bound_touch_npix,
-            ushort[,] axons_inside_pix, int[] axons_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr){ }
-        
+            ushort[,] axons_inside_pix, int[] axons_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr)
+        { }
+
         [CudafyDummy]
         public static void cuda_calc_diff(int im_size,
             float[,] tox, float[,] rate, uint[,] locked_pix, float[,] diff)
         { }
+
         [CudafyDummy]
         public static void cuda_calc_tox(int im_size,
-            float[,] tox, float[,] rate, float[,] detox, uint[,] locked_pix, float[,] diff){ }
-
-
-
-        [Cudafy]
-        // ======================================================================
-        // Updates: tox_touch_neur, rate, detox, locked_pix and live_neur
-        public static void gpu_update_live_neurs(GThread thread,
-            int n_neurs, float[,] tox, float[,] rate, float[,] detox, bool[] live_neur, int[] num_live_neur, float[] tox_touch_neur, float[] neur_tol, int[,,] axons_bound_touch_pix, int[] axons_bound_touch_npix,
-            ushort[,] axons_inside_pix, int[] axons_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr)
-        {
-            int t_id = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
-            int stride = thread.blockDim.x * thread.gridDim.x;
-
-            int t;
-
-            for (int n = 0; n < n_neurs; n++)
-                if (live_neur[n])
-                {
-                    t = t_id;
-                    while (t < axons_bound_touch_npix[n])
-                    {
-                        int x = axons_bound_touch_pix[n, t, 0];
-                        int y = axons_bound_touch_pix[n, t, 1];
-                        if (locked_pix[x, y] == 0)
-                            thread.atomicAdd(ref tox_touch_neur[n], tox[axons_bound_touch_pix[n, t, 0], axons_bound_touch_pix[n, t, 1]]);
-                        t += stride;
-                    }
-                }
-            thread.SyncThreads();
-
-            for (int n = 0; n < n_neurs; n++)
-            {
-                if (tox_touch_neur[n] > neur_tol[n])
-                {
-                    // kill neuron/axon
-                    t = t_id + axons_inside_pix_idx[n];
-                    while (t < axons_inside_pix_idx[n + 1])
-                    {
-                        locked_pix[axons_inside_pix[t, 0], axons_inside_pix[t, 1]] -= 1;
-                        detox[axons_inside_pix[t, 0], axons_inside_pix[t, 1]] = 0;
-                        t += stride;
-                    }
-                    if (t_id == 0)
-                    {
-                        live_neur[n] = false;
-                        num_live_neur[0]--;
-                        death_itr[n] = itr;
-                    }
-                }
-            }
-        }
-        
-        [Cudafy]
-        // ======================================================================
-        public static void gpu_calc_neur_state(GThread thread)
-        {
-
-        }
+            float[,] tox, float[,] rate, float[,] detox, uint[,] locked_pix, float[,] diff)
+        { }
 
 
         // ======================================================================

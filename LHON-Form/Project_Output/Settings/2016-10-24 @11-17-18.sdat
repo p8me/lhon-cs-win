@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<Setts xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <resolution>10</resolution>
+  <neur_tol_coeff>1</neur_tol_coeff>
+  <neur_rate>0.9</neur_rate>
+</Setts>

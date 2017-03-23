@@ -127,6 +127,8 @@ namespace LHON_Form
             this.txt_min_first_r = new System.Windows.Forms.TextBox();
             this.label13 = new System.Windows.Forms.Label();
             this.btn_snapshot = new System.Windows.Forms.Button();
+            this.txt_stop_itr = new System.Windows.Forms.TextBox();
+            this.label16 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.picB)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
@@ -936,11 +938,11 @@ namespace LHON_Form
             // 
             this.label3.Anchor = System.Windows.Forms.AnchorStyles.Right;
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(23, 1);
+            this.label3.Location = new System.Drawing.Point(3, 1);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(35, 17);
+            this.label3.Size = new System.Drawing.Size(55, 17);
             this.label3.TabIndex = 16;
-            this.label3.Text = "itr/s:";
+            this.label3.Text = "Av itr/s:";
             // 
             // lbl_itr_s
             // 
@@ -1207,7 +1209,7 @@ namespace LHON_Form
             // 
             this.txt_min_first_r.Location = new System.Drawing.Point(545, 111);
             this.txt_min_first_r.Name = "txt_min_first_r";
-            this.txt_min_first_r.Size = new System.Drawing.Size(68, 22);
+            this.txt_min_first_r.Size = new System.Drawing.Size(52, 22);
             this.txt_min_first_r.TabIndex = 35;
             this.txt_min_first_r.Text = "1";
             // 
@@ -1216,9 +1218,9 @@ namespace LHON_Form
             this.label13.AutoSize = true;
             this.label13.Location = new System.Drawing.Point(434, 113);
             this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(107, 17);
+            this.label13.Size = new System.Drawing.Size(106, 17);
             this.label13.TabIndex = 34;
-            this.label13.Text = "min_first_r (um)";
+            this.label13.Text = "First Axon MinR";
             // 
             // btn_snapshot
             // 
@@ -1229,11 +1231,30 @@ namespace LHON_Form
             this.btn_snapshot.Text = "Snapshot";
             this.btn_snapshot.UseVisualStyleBackColor = true;
             // 
+            // txt_stop_itr
+            // 
+            this.txt_stop_itr.Location = new System.Drawing.Point(545, 139);
+            this.txt_stop_itr.Name = "txt_stop_itr";
+            this.txt_stop_itr.Size = new System.Drawing.Size(68, 22);
+            this.txt_stop_itr.TabIndex = 38;
+            this.txt_stop_itr.Text = "0";
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(434, 141);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(110, 17);
+            this.label16.TabIndex = 37;
+            this.label16.Text = "Stop @ Iteration";
+            // 
             // Main_Form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1137, 807);
+            this.Controls.Add(this.txt_stop_itr);
+            this.Controls.Add(this.label16);
             this.Controls.Add(this.btn_snapshot);
             this.Controls.Add(this.txt_min_first_r);
             this.Controls.Add(this.label13);
@@ -1389,6 +1410,8 @@ namespace LHON_Form
         private Label lbl_live_neur_perc;
         private Label label23;
         private TextBox txt_num_tries;
+        private TextBox txt_stop_itr;
+        private Label label16;
     }
 }
 

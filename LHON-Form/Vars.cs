@@ -26,16 +26,26 @@ namespace LHON_Form
 {
     public partial class Main_Form : Form
     {
-        private BackgroundWorker alg_worker = new BackgroundWorker(), new_model_worker = new BackgroundWorker();
-        AviManager aviManager;
-        string avi_file;
-        VideoStream aviStream;
-
+        const string ProjectOutputDir = @"..\..\Project_Output\";
+        
         // Used as measure of comparison
         const float real_model_nerve_r = 750; // um
         const int real_model_num_neurs = 1200000;
 
-        const float detox_val = 0.05F;
+        float detox_val = 0.05F;
+        
+        const int threads_per_block_1D = 32;
+        
+        int nerve_clear = 4; // clearance of nerve from image borders in unit length
+
+        int stop_iteration = 0;
+
+        // ======================================================
+
+        private BackgroundWorker alg_worker = new BackgroundWorker(), new_model_worker = new BackgroundWorker();
+        AviManager aviManager;
+        string avi_file;
+        VideoStream aviStream;
 
         int first_neur_idx = 0;
 
@@ -103,16 +113,11 @@ namespace LHON_Form
         float[] neur_tol, tox_touch_neur, tox_touch_neur_last,
             neur_tol_dev, tox_touch_neur_dev;
 
-        int nerve_clear = 4; // clearance of nerve from image borders in length units
 
         float area_res_factor = 1;
 
         float[] init_insult = new float[2] { 0, 0 };
-
-        const int threads_per_block_1D = 32;
-
-        //int round_block_siz(int siz){return siz / Block_Size * Block_Size;}
-
+        
         dim3 blocks_per_grid, threads_per_block;
         byte[,,] bmp_dev;
         
@@ -150,7 +155,7 @@ namespace LHON_Form
 
         Setts setts = new Setts();
 
-        // ============= Main loop stuff
+        // ============= Main loop vars =================
 
         float progress_step, next_areal_progress_snapshot, next_chron_progress_snapshot;
         tic_toc tt_sim = new tic_toc();

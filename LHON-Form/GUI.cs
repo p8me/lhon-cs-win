@@ -36,6 +36,9 @@ namespace LHON_Form
 
             chk_show_bound.CheckedChanged += (o, e) => update_show_opts();
             chk_show_tox.CheckedChanged += (o, e) => update_show_opts();
+
+            txt_stop_itr.TextChanged += (s, e) => stop_iteration = read_int(s);
+
             btn_reset.Click += (s, e) =>
             {
                 if (rate == null)
@@ -73,20 +76,20 @@ namespace LHON_Form
                 if (chk_rec_avi.Checked)
                 {
                     chk_rec_avi.Text = "Recoding AVI";
-                    //avi_file = @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + '(' + (im_size * im_size / 1e6).ToString("0.0") + "Mpix).avi";
-                    //aviManager = new AviManager(avi_file, false);
-                    //Avi.AVICOMPRESSOPTIONS options = new Avi.AVICOMPRESSOPTIONS();
-                    //options.fccType = (uint)Avi.mmioStringToFOURCC("vids", 5);
-                    //options.fccHandler = (uint)Avi.mmioStringToFOURCC("CVID", 5);
-                    ////options.dwQuality = 1;
-                    //aviStream = aviManager.AddVideoStream(options, 10, bmp);
+                    avi_file = ProjectOutputDir + @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + '(' + (im_size * im_size / 1e6).ToString("0.0") + "Mpix).avi";
+                    aviManager = new AviManager(avi_file, false);
+                    Avi.AVICOMPRESSOPTIONS options = new Avi.AVICOMPRESSOPTIONS();
+                    options.fccType = (uint)Avi.mmioStringToFOURCC("vids", 5);
+                    options.fccHandler = (uint)Avi.mmioStringToFOURCC("CVID", 5);
+                    //options.dwQuality = 1;
+                    aviStream = aviManager.AddVideoStream(options, 10, bmp);
                 }
                 else
                 {
                     chk_rec_avi.Text = "Record AVI";
-                    //aviManager.Close();
-                    //Process.Start(avi_file);
-                    var path = @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + '(' + (im_size * im_size / 1e6).ToString("0.0") + "Mpix).gif";
+                    aviManager.Close();
+                    Process.Start(avi_file);
+                    var path = ProjectOutputDir + @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + '(' + (im_size * im_size / 1e6).ToString("0.0") + "Mpix).gif";
                     using (FileStream fs = new FileStream(path, FileMode.Create))
                         gifEnc.Save(fs);
                 }
@@ -110,7 +113,7 @@ namespace LHON_Form
 
             btn_snapshot.Click += (s, e) =>
             {
-                string adr = @"Snapshots\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".jpg";
+                string adr = ProjectOutputDir + @"Snapshots\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".jpg";
                 append_stat_ln("Snapshot saved to: " + adr);
                 bmp.Save(adr);
             };
@@ -280,7 +283,7 @@ namespace LHON_Form
 
             btn_save_model.Click += (s, e) =>
             {
-                var fil_name = @"Models\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".mdat";
+                var fil_name = ProjectOutputDir + @"Models\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".mdat";
                 Debug.WriteLine(fil_name);
 
                 FileStream outFile = File.Create(fil_name);
@@ -293,7 +296,7 @@ namespace LHON_Form
             {
                 var FD = new OpenFileDialog()
                 {
-                    InitialDirectory = @"Models\",
+                    InitialDirectory = ProjectOutputDir + @"Models\",
                     Title = "Load Model",
                     Filter = "Model Data files (*.mdat) | *.mdat",
                     RestoreDirectory = true,
@@ -305,7 +308,7 @@ namespace LHON_Form
 
             btn_save_setts.Click += (s, e) =>
             {
-                var fil_name = @"Settings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".sdat";
+                var fil_name = ProjectOutputDir + @"Settings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".sdat";
                 Debug.WriteLine(fil_name);
 
                 FileStream outFile = File.Create(fil_name);
@@ -318,7 +321,7 @@ namespace LHON_Form
             {
                 var FD = new OpenFileDialog()
                 {
-                    InitialDirectory = @"Settings\",
+                    InitialDirectory = ProjectOutputDir + @"Settings\",
                     Title = "Load Settings",
                     Filter = "Setting files (*.sdat) | *.sdat",
                     RestoreDirectory = true,
@@ -330,10 +333,10 @@ namespace LHON_Form
 
             // =============== Init Value
 
-            string[] fileEntries = Directory.GetFiles(@"Models\");
+            string[] fileEntries = Directory.GetFiles(ProjectOutputDir + @"Models\");
             if (fileEntries.Length > 0) load_model(fileEntries[fileEntries.Length - 1]);
 
-            fileEntries = Directory.GetFiles(@"Settings\");
+            fileEntries = Directory.GetFiles(ProjectOutputDir + @"Settings\");
             if (fileEntries.Length > 0) load_settings(fileEntries[fileEntries.Length - 1]);
 
         }

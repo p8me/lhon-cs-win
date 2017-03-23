@@ -156,7 +156,7 @@ namespace LHON_Form
                                 string par_nam = "(" + parameter_name1 + ")";
                                 if (sweep_repetitions2 > 0)
                                     par_nam += "(" + parameter_name2 + ")";
-                                dir_name = string.Format("Progression\\{0} {1}", DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss"), par_nam);
+                                dir_name = string.Format(ProjectOutputDir + "Progression\\{0} {1}", DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss"), par_nam);
                                 Directory.CreateDirectory(dir_name);
                             }
                             string par_val;

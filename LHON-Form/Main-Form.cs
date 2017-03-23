@@ -99,9 +99,18 @@ namespace LHON_Form
 
                 if ((iteration % (int)area_res_factor) == 0)
                 {
+
                     //gpu.Launch(1, 32).gpu_update_live_neurs(mdl.n_neurs, tox_dev, rate_dev, detox_dev, live_neur_dev, num_live_neur_dev, tox_touch_neur_dev, neur_tol_dev, axons_bound_touch_pix_dev, axons_bound_touch_npix_dev,
-                       //axons_inside_pix_dev, axons_inside_pix_idx_dev, locked_pix_dev, death_itr_dev, iteration);
-                    /*
+                    //    axons_inside_pix_dev, axons_inside_pix_idx_dev, locked_pix_dev, death_itr_dev, iteration);
+
+                    
+                    gpu.Set(tox_touch_neur_dev);
+                    gpu.Launch(1, 32).cuda_update_live_neurs(im_size, mdl.n_neurs, tox_dev, rate_dev, detox_dev,
+                        live_neur_dev, num_live_neur_dev, tox_touch_neur_dev, neur_tol_dev, axons_bound_touch_pix_dev, max_set_size_bound_touch,
+                        axons_bound_touch_npix_dev, axons_inside_pix_dev, axons_inside_pix_idx_dev, locked_pix_dev, death_itr_dev, iteration);
+                    
+
+                    /* SCREW_PROGRESSION
                     gpu.Set(progress_dev);
                     gpu.Launch(blocks_per_grid, threads_per_block)).gpu_areal_progress(tox_dev, locked_pix_dev, progress_dev, areal_progress_lim);
                     gpu.CopyFromDevice(progress_dev, progress_dat);
@@ -144,7 +153,7 @@ namespace LHON_Form
                     }
                     */
                     //gpu.Synchronize();
-                    //alg_prof.time(1);
+                    alg_prof.time(1);
                 }
                 gpu.Set(diff_dev);// gpu.Synchronize();
                 alg_prof.time(2);
@@ -175,7 +184,7 @@ namespace LHON_Form
                 }
                 
                 if (sim_stat != sim_stat_enum.Running) break;
-                if (iteration == 5000) stop_sim(sim_stat_enum.Failed);
+                if (iteration == 500) stop_sim(sim_stat_enum.Failed);
             }
 
             tt_sim.pause();
@@ -300,9 +309,7 @@ namespace LHON_Form
                 int min_dis = 1000000000;
                 int iicx = (int)((init_insult[0] + mdl.nerve_r + nerve_clear) * setts.resolution);
                 int iicy = (int)((init_insult[1] + mdl.nerve_r + nerve_clear) * setts.resolution);
-
                 float min_first_r = float.Parse(txt_min_first_r.Text) * setts.resolution;
-
                 for (int i = 0; i < mdl.n_neurs; i++)
                 {
                     int dx = (int)axons_coor[i, 0] - iicx;
@@ -313,27 +320,26 @@ namespace LHON_Form
                         min_dis = dis;
                         first_neur_idx = i;
                     }
-                }
 
-                sum_tox = 0;
-                for (int y = 0; y < im_size; y++)
-                    for (int x = 0; x < im_size; x++)
-                    {
-                        tox[x, y] = tox_init[x, y];
-                        sum_tox += tox_init[x, y];
-                        rate[x, y] = rate_init[x, y];
-                        detox[x, y] = detox_init[x, y];
-                        locked_pix[x, y] = locked_pix_init[x, y];
-                    }
-                iteration = 0;
-                
-                for (int i = 0; i < mdl.n_neurs; i++)
-                {
                     live_neur[i] = true;
                     death_itr[i] = 0;
                     tox_touch_neur[i] = 0;
                 }
+                
+                tox = (float[,])tox_init.Clone();
+                rate = (float[,])rate_init.Clone();
+                detox = (float[,])detox_init.Clone();
+                locked_pix = (byte[,])locked_pix_init.Clone();
 
+                /* SCREW_GUI
+                sum_tox = 0;
+                for (int y = 0; y < im_size; y++)
+                    for (int x = 0; x < im_size; x++)
+                        sum_tox += tox_init[x, y];
+                */
+
+                iteration = 0;
+                
                 update_gui_labels();
 
                 for (int i = 0; i < mdl.n_neurs; i++) neur_lbl[i].lbl = "";
@@ -353,13 +359,13 @@ namespace LHON_Form
                 chron_progress_areal_val = new float[progress_num_frames];
 
                 num_live_neur[0] = mdl.n_neurs - 1;
-
+                
                 load_gpu_from_cpu();
-
+                
                 update_show_opts();
                 update_bmp_from_tox(true);
                 picB_Resize(null, null);
-
+                
                 sim_stat = sim_stat_enum.None;
 
             }

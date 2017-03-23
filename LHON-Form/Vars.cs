@@ -35,7 +35,7 @@ namespace LHON_Form
         const float real_model_nerve_r = 750; // um
         const int real_model_num_neurs = 1200000;
 
-        const float detox_val = 0.01F;
+        const float detox_val = 0.05F;
 
         int first_neur_idx = 0;
 
@@ -51,7 +51,7 @@ namespace LHON_Form
 
         float[,] tox, tox_init, tox_dev;
         
-        uint[,] locked_pix, locked_pix_dev, locked_pix_init;
+        byte[,] locked_pix, locked_pix_dev, locked_pix_init;
 
         float sum_tox, areal_progress, chron_progress;
         float[] progress_dat = new float[3];
@@ -109,7 +109,7 @@ namespace LHON_Form
 
         float[] init_insult = new float[2] { 0, 0 };
 
-        const int threads_per_block_1D = 8;
+        const int threads_per_block_1D = 32;
 
         //int round_block_siz(int siz){return siz / Block_Size * Block_Size;}
 

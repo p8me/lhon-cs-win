@@ -26,7 +26,7 @@ namespace LHON_Form
     public partial class Main_Form : Form
     {
         volatile GPGPU gpu;
-        bool recompile_cuda = false;
+        bool recompile_cuda = true;
 
         public bool init_gpu()
         {
@@ -61,12 +61,21 @@ namespace LHON_Form
             return false;
         }
 
-        //[CudafyDummy]
-        //public static void cuda_update_live_neurs(int im_size,
-        //    int n_neurs, float[,] tox, float[,] rate, float[,] detox, bool[] live_neur, int[] num_live_neur,
-        //    float[] tox_touch_neur, float[] neur_tol, int[,,] axons_bound_touch_pix, int[] axons_bound_touch_npix,
-        //    ushort[,] axons_inside_pix, int[] axons_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr){ }
+        // ==================================================================
+        //                          Preprocess
+        // ==================================================================
 
+        [Cudafy]
+        public static void gpu_proprocess_1(GThread thread)
+        {
+
+        }
+        [CudafyDummy]
+        public static void cuda_update_live_neurs(int im_size,
+            int n_neurs, float[,] tox, float[,] rate, float[,] detox, bool[] live_neur, int[] num_live_neur,
+            float[] tox_touch_neur, float[] neur_tol, int[,,] axons_bound_touch_pix, int[] axons_bound_touch_npix,
+            ushort[,] axons_inside_pix, int[] axons_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr){ }
+        
         [CudafyDummy]
         public static void cuda_calc_diff(int im_size,
             float[,] tox, float[,] rate, uint[,] locked_pix, float[,] diff)
@@ -84,27 +93,22 @@ namespace LHON_Form
             int n_neurs, float[,] tox, float[,] rate, float[,] detox, bool[] live_neur, int[] num_live_neur, float[] tox_touch_neur, float[] neur_tol, int[,,] axons_bound_touch_pix, int[] axons_bound_touch_npix,
             ushort[,] axons_inside_pix, int[] axons_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr)
         {
-            int t = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
+            int t_id = thread.threadIdx.x + thread.blockIdx.x * thread.blockDim.x;
             int stride = thread.blockDim.x * thread.gridDim.x;
 
-            int task_id = t;
-            while (task_id < n_neurs)
-            {
-                tox_touch_neur[task_id] = 0;
-                task_id += stride;
-            }
-
-            thread.SyncThreads();
+            int t;
 
             for (int n = 0; n < n_neurs; n++)
                 if (live_neur[n])
                 {
-                    task_id = t;
-                    while (task_id < axons_bound_touch_npix[n])
+                    t = t_id;
+                    while (t < axons_bound_touch_npix[n])
                     {
-                        if (locked_pix[axons_bound_touch_pix[n, task_id, 0], axons_bound_touch_pix[n, task_id, 1]] == 0)
-                            thread.atomicAdd(ref tox_touch_neur[n], tox[axons_bound_touch_pix[n, task_id, 0], axons_bound_touch_pix[n, task_id, 1]]);
-                        task_id += stride;
+                        int x = axons_bound_touch_pix[n, t, 0];
+                        int y = axons_bound_touch_pix[n, t, 1];
+                        if (locked_pix[x, y] == 0)
+                            thread.atomicAdd(ref tox_touch_neur[n], tox[axons_bound_touch_pix[n, t, 0], axons_bound_touch_pix[n, t, 1]]);
+                        t += stride;
                     }
                 }
             thread.SyncThreads();
@@ -114,14 +118,14 @@ namespace LHON_Form
                 if (tox_touch_neur[n] > neur_tol[n])
                 {
                     // kill neuron/axon
-                    task_id = t + axons_inside_pix_idx[n];
-                    while (task_id < axons_inside_pix_idx[n + 1])
+                    t = t_id + axons_inside_pix_idx[n];
+                    while (t < axons_inside_pix_idx[n + 1])
                     {
-                        locked_pix[axons_inside_pix[task_id, 0], axons_inside_pix[task_id, 1]] -= 1;
-                        detox[axons_inside_pix[task_id, 0], axons_inside_pix[task_id, 1]] = 0;
-                        task_id += stride;
+                        locked_pix[axons_inside_pix[t, 0], axons_inside_pix[t, 1]] -= 1;
+                        detox[axons_inside_pix[t, 0], axons_inside_pix[t, 1]] = 0;
+                        t += stride;
                     }
-                    if (t == 0)
+                    if (t_id == 0)
                     {
                         live_neur[n] = false;
                         num_live_neur[0]--;
@@ -130,52 +134,7 @@ namespace LHON_Form
                 }
             }
         }
-
-        [Cudafy]
-        // ======================================================================
-        // Updates: diff
-        public static void gpu_calc_diff(GThread thread,
-            float[,] tox, float[,] rate, uint[,] locked_pix, float[,] diff)
-        {
-            int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x;
-            int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y;
-
-            if (locked_pix[x, y] == 0 && tox[x, y] > 0)
-            {
-                float rate_sum = 0;
-                if (locked_pix[x + 1, y] == 0) rate_sum += rate[x + 1, y];
-                if (locked_pix[x - 1, y] == 0) rate_sum += rate[x - 1, y];
-                if (locked_pix[x, y + 1] == 0) rate_sum += rate[x, y + 1];
-                if (locked_pix[x, y - 1] == 0) rate_sum += rate[x, y - 1];
-
-                float tox_giving_away_port = rate[x, y] * rate_sum / 4;
-                float tox_gives = tox[x, y] * tox_giving_away_port / rate_sum;
-
-                if (locked_pix[x + 1, y] == 0) thread.atomicAdd(ref diff[x + 1, y], tox_gives * rate[x + 1, y]);
-                if (locked_pix[x - 1, y] == 0) thread.atomicAdd(ref diff[x - 1, y], tox_gives * rate[x - 1, y]);
-                if (locked_pix[x, y + 1] == 0) thread.atomicAdd(ref diff[x, y + 1], tox_gives * rate[x, y + 1]);
-                if (locked_pix[x, y - 1] == 0) thread.atomicAdd(ref diff[x, y - 1], tox_gives * rate[x, y - 1]);
-
-                tox[x, y] = (1 - tox_giving_away_port) * tox[x, y];
-            }
-        }
         
-        [Cudafy]
-        // ======================================================================
-        // Updates: tox
-        public static void gpu_calc_tox(GThread thread,
-            float[,] tox, float[,] rate, float[,] detox, uint[,] locked_pix, float[,] diff)
-        {
-            int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x;
-            int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y;
-
-            if (locked_pix[x, y] == 0)
-            {
-                if (rate[x, y] > 0) tox[x, y] += diff[x, y];
-                if (tox[x, y] > 0) tox[x, y] -= detox[x, y];
-            }
-        }
-
         [Cudafy]
         // ======================================================================
         public static void gpu_calc_neur_state(GThread thread)

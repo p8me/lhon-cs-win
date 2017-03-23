@@ -46,34 +46,33 @@ namespace LHON_Form
             // ======== Image Properties =========
             rate = new float[im_size, im_size];
             detox = new float[im_size, im_size];
-            locked_pix = new uint[im_size, im_size];
+            locked_pix = new byte[im_size, im_size];
             tox_init = new float[im_size, im_size];
             rate_init = new float[im_size, im_size];
             detox_init = new float[im_size, im_size];
-            locked_pix_init = new uint[im_size, im_size];
+            locked_pix_init = new byte[im_size, im_size];
             bool[,] cant_be_touch_pix = new bool[im_size, im_size];
 
             // ======== Image Properties Initialization =========
-            int nerve_cent = im_size / 2;
+            int nerve_cent_pix = im_size / 2;
             int nerve_r_pix = (int)(mdl.nerve_r * setts.resolution);
             int vein_r_pix = (int)(mdl.vein_rat * mdl.nerve_r * setts.resolution);
             Func<int, int, int, int> within_circle2_int = (x, y, r) =>
             {
-                int dx = x - nerve_cent;
-                int dy = y - nerve_cent;
+                int dx = x - nerve_cent_pix;
+                int dy = y - nerve_cent_pix;
                 return r * r - (dx * dx + dy * dy);
             };
-
+            alg_prof.time(1);
             for (int y = 0; y < im_size; y++)
                 for (int x = 0; x < im_size; x++)
                 {
-                    rate[x, y] = 1F;
-                    if (within_circle2_int(x, y, nerve_r_pix) < 0
-                        || within_circle2_int(x, y, vein_r_pix) > 0)
+                    if (within_circle2_int(x, y, nerve_r_pix) < 0 || within_circle2_int(x, y, vein_r_pix) > 0)
                     { rate[x, y] = 0; locked_pix[x, y]++; }
+                    else rate[x, y] = 1F;
                 }
 
-            alg_prof.time(1);
+            alg_prof.time(2);
 
             // ======== Common Neuron Properties (+Initialization) =========
 
@@ -119,9 +118,9 @@ namespace LHON_Form
                 {
                     show_neur_lvl[i] = mdl.neur_cor[i][2] > mdl.max_r;
 
-                    float xc = ((mdl.neur_cor[i][0] + mdl.nerve_r + nerve_clear) * setts.resolution);
-                    float yc = ((mdl.neur_cor[i][1] + mdl.nerve_r + nerve_clear) * setts.resolution);
-                    float rc = (mdl.neur_cor[i][2] * setts.resolution);
+                    float xc = nerve_cent_pix + mdl.neur_cor[i][0] * setts.resolution;
+                    float yc = nerve_cent_pix + mdl.neur_cor[i][1] * setts.resolution;
+                    float rc = mdl.neur_cor[i][2] * setts.resolution;
 
                     axons_coor[i, 0] = xc; axons_coor[i, 1] = yc; axons_coor[i, 2] = rc;
 
@@ -165,7 +164,7 @@ namespace LHON_Form
                         }
                 }
 
-                alg_prof.time(2);
+                alg_prof.time(3);
 
                 float detox_resolution = detox_val / (float)Math.Pow(setts.resolution, 2);
 
@@ -194,7 +193,7 @@ namespace LHON_Form
                         }
                     }
                 }
-                alg_prof.time(3);
+                alg_prof.time(4);
             }
 
             //catch (Exception e)
@@ -208,28 +207,22 @@ namespace LHON_Form
             int temp = 0;
 
             // Keep back up of inital state
-
             tox_init = (float[,])tox.Clone();
             rate_init = (float[,])rate.Clone();
             detox_init = (float[,])detox.Clone();
-            locked_pix_init = (uint[,])locked_pix.Clone();
-            /*
-            tox_init[x, y] = tox[x, y];
-            rate_init[x, y] = rate[x, y];
-            detox_init[x, y] = detox[x, y];
-            locked_pix_init[x, y] = locked_pix[x, y];
-            */
+            locked_pix_init = (byte[,])locked_pix.Clone();
+
+            /* SCREW_GUI
             for (int y = 0; y < im_size; y++)
                 for (int x = 0; x < im_size; x++)
-                {
                     if (within_circle2_int(x, y, nerve_r_pix) > 0)
                     {
                         temp++;
                         if (tox[x, y] > 0) areal_progress_lim++;
                     }
-                }
+            */
 
-            alg_prof.time(4);
+            alg_prof.time(5);
 
             areal_progress_lim = areal_progress_lim / temp * 0.7F;
 

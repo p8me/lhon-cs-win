@@ -122,7 +122,7 @@ namespace LHON_Form
             show_opts[1] = chk_show_tox.Checked;
 
             gpu.CopyToDevice(show_opts, show_opts_dev);
-            update_bmp_from_tox(true);
+            update_bmp_from_tox(false);
         }
 
         // ========================================= Start / Stop
@@ -352,6 +352,8 @@ namespace LHON_Form
             aFile.Close();
 
             update_mdl_and_setts_ui();
+
+            update_bottom_stat("Model Successfully Loaded.");
 
             //preprocess_model();
         }

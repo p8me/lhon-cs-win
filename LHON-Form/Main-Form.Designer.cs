@@ -129,6 +129,8 @@ namespace LHON_Form
             this.btn_snapshot = new System.Windows.Forms.Button();
             this.txt_stop_itr = new System.Windows.Forms.TextBox();
             this.label16 = new System.Windows.Forms.Label();
+            this.txt_block_siz = new System.Windows.Forms.TextBox();
+            this.label24 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.picB)).BeginInit();
             this.groupBox1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
@@ -1248,11 +1250,30 @@ namespace LHON_Form
             this.label16.TabIndex = 37;
             this.label16.Text = "Stop @ Iteration";
             // 
+            // txt_block_siz
+            // 
+            this.txt_block_siz.Location = new System.Drawing.Point(545, 167);
+            this.txt_block_siz.Name = "txt_block_siz";
+            this.txt_block_siz.Size = new System.Drawing.Size(68, 22);
+            this.txt_block_siz.TabIndex = 40;
+            this.txt_block_siz.Text = "16";
+            // 
+            // label24
+            // 
+            this.label24.AutoSize = true;
+            this.label24.Location = new System.Drawing.Point(468, 167);
+            this.label24.Name = "label24";
+            this.label24.Size = new System.Drawing.Size(71, 17);
+            this.label24.TabIndex = 39;
+            this.label24.Text = "Block size";
+            // 
             // Main_Form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1137, 807);
+            this.Controls.Add(this.txt_block_siz);
+            this.Controls.Add(this.label24);
             this.Controls.Add(this.txt_stop_itr);
             this.Controls.Add(this.label16);
             this.Controls.Add(this.btn_snapshot);
@@ -1412,6 +1433,8 @@ namespace LHON_Form
         private TextBox txt_num_tries;
         private TextBox txt_stop_itr;
         private Label label16;
+        private TextBox txt_block_siz;
+        private Label label24;
     }
 }
 

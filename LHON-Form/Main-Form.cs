@@ -55,7 +55,7 @@ namespace LHON_Form
 
         // =============================== MAIN LOOP
 
-        bool en_gpu_sync = true;
+        bool en_gpu_sync = false;
 
         unsafe private void Run_Alg_GPU()
         {
@@ -98,7 +98,7 @@ namespace LHON_Form
 
                 if ((iteration % (int)area_res_factor) == 0)
                 {
-                    gpu.Launch(mdl.n_neurs / 32, 32).cuda_update_live(im_size, mdl.n_neurs, tox_dev, rate_dev, detox_dev,
+                    gpu.Launch(mdl.n_neurs / 16, 16).cuda_update_live(im_size, mdl.n_neurs, tox_dev, rate_dev, detox_dev,
                         live_neur_dev, num_live_neur_dev, tox_touch_neur_dev, neur_tol_dev, axons_bound_touch_pix_dev, max_set_size_bound_touch,
                         axons_bound_touch_npix_dev, axons_inside_pix_dev, axons_inside_pix_idx_dev, locked_pix_dev, death_itr_dev, iteration);
 
@@ -132,7 +132,7 @@ namespace LHON_Form
                         next_chron_progress_snapshot += progress_step;
                         Take_Progress_Snapshot(chron_progression_image_stack, chron_progression_image_stack_cnt++);
                     }
-
+                    */
                     // Automatic End of Simulation
                     if (iteration > last_itr + 5)
                     {
@@ -143,7 +143,7 @@ namespace LHON_Form
                         if (!sweep_is_running && chk_save_prog.Checked)
                             Save_Progress(ProjectOutputDir + @"Progression\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".prgim");
                     }
-                    */
+                    
                     if (en_gpu_sync) gpu.Synchronize();
                     alg_prof.time(1);
                 }
@@ -155,16 +155,17 @@ namespace LHON_Form
 
                 if (update_gui)
                 {
-                    //gpu.CopyFromDevice(tox_touch_neur_dev, tox_touch_neur);
-                    //gpu.CopyFromDevice(live_neur_dev, live_neur);
+                    gpu.CopyFromDevice(tox_touch_neur_dev, tox_touch_neur);
+                    gpu.CopyFromDevice(live_neur_dev, live_neur);
 
                     // Calc tox_sum
-                    //gpu.Set(sum_tox_dev);
-                    //gpu.Launch(blocks_per_grid, threads_per_block)).gpu_sum_tox(tox_dev, sum_tox_dev);
-                    //gpu.CopyFromDevice(sum_tox_dev, out sum_tox); if (en_gpu_sync) gpu.Synchronize();
+                    gpu.Set(sum_tox_dev);
+                    gpu.Launch(blocks_per_grid, threads_per_block).gpu_sum_tox(tox_dev, sum_tox_dev);
+                    gpu.CopyFromDevice(sum_tox_dev, out sum_tox);
 
+                    if (en_gpu_sync) gpu.Synchronize();
                     update_gui_labels();
-                    //alg_prof.time(5);
+                    alg_prof.time(5);
 
                     gpu.Launch(blocks_per_grid, threads_per_block).gpu_fill_bmp(tox_dev, bmp_dev, show_opts_dev, touch_pix_dev);
                     gpu.CopyFromDevice(bmp_dev, bmp_bytes);
@@ -252,10 +253,7 @@ namespace LHON_Form
             if (mdl.n_neurs <= idx) return;
 
             for (int i = axons_inside_pix_idx[idx]; i < axons_inside_pix_idx[idx + 1]; i++)
-            {
                 locked_pix[axons_inside_pix[i, 0], axons_inside_pix[i, 1]]--;
-                    
-            }
             
             if (idx != first_neur_idx) neur_lbl[idx].lbl = "";
 
@@ -360,7 +358,7 @@ namespace LHON_Form
                 picB_Resize(null, null);
 
                 sim_stat = sim_stat_enum.None;
-
+                
             }
         }
     }

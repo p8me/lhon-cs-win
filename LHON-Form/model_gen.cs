@@ -26,6 +26,9 @@ namespace LHON_Form
 {
     public partial class Main_Form : Form
     {
+
+        bool show_neur_order_mdl_gen = false;
+
         // =============================== Model Generation
 
         float sample_raduis(float mean)
@@ -85,7 +88,7 @@ namespace LHON_Form
                 {
                     float dx = x - xc;
                     float dy = y - yc;
-                    if (rc_clear2 - (dx * dx + dy * dy) > 0)
+                    if (rc_clear2 - (dx * dx + dy * dy) >= 0)
                         if (mdl_occupied[x, y])
                             return true;
                 }
@@ -125,7 +128,7 @@ namespace LHON_Form
             //        { .92,   1.02,    1.02,    1.14,    1.16,    1.24 },
             //        {1.01,    1.1,    1.10,    1.22,    1.22,    1.21 } };
 
-            mdl_resolution = 20; // 8 / mdl.clearance;
+            mdl_resolution = 25; // 8 / mdl.clearance;
 
             im_size = (int)(mdl.nerve_r * 2 * mdl_resolution);
 
@@ -215,8 +218,8 @@ namespace LHON_Form
                 for (int y = box_y0; y < box_y1; y++)
                     for (int x = box_x0; x < box_x1; x++)
                     {
-                        float dx = x - xc;
-                        float dy = y - yc;
+                        //float dx = x - xc;
+                        //float dy = y - yc;
                         //if (rc_clear2 - (dx * dx + dy * dy) > 0)
                         if (within_circle2(x, y, xc, yc, rc) > 0)
                             mdl_occupied[x, y] = true;
@@ -233,10 +236,10 @@ namespace LHON_Form
             mdl.neur_cor = new List<float[]>();
             mdl.n_neurs = 0;
 
-            // REMOVE 2
-            //mdl_neur_lbl = new neur_lbl_class[mdl_n_neurs];
+            if (show_neur_order_mdl_gen)
+                mdl_neur_lbl = new neur_lbl_class[mdl_n_neurs];
 
-            //int idx = 0;
+            int idx = 0;
             for (int i = 0; i < mdl_n_neurs; i++)
             {
                 float cent_dis = (float)Math.Sqrt(mdl_neur_cor[i][0] * mdl_neur_cor[i][0] +
@@ -247,11 +250,15 @@ namespace LHON_Form
                 mdl.neur_cor.Add(mdl_neur_cor[i]);
                 mdl.n_neurs++;
 
-                // REMOVE
-                //float tempx = (mdl_neur_cor[i][0] + mdl.nerve_r + nerve_clear) * setts.resolution;
-                //float tempy = (mdl_neur_cor[i][1] + mdl.nerve_r + nerve_clear) * setts.resolution;
-                //mdl_neur_lbl[idx] = new neur_lbl_class { lbl = (i + 1).ToString("0"), x = tempx, y = tempy };
-                //idx++;
+                int tmp_im_siz = im_size = calc_im_siz();
+
+                if (show_neur_order_mdl_gen)
+                {
+                    float tempx = mdl_neur_cor[i][0] * setts.resolution + tmp_im_siz / 2;
+                    float tempy = mdl_neur_cor[i][1] * setts.resolution + tmp_im_siz / 2;
+                    mdl_neur_lbl[idx] = new neur_lbl_class { lbl = (i + 1).ToString("0"), x = tempx, y = tempy };
+                    idx++;
+                }
             }
 
             append_stat("Model Generated in " + (toc() / 1000).ToString("0.0") + " secs\n");
@@ -260,7 +267,6 @@ namespace LHON_Form
 
             first_neur_idx = 0;
             preprocess_model();
-            Debug.WriteLine("prep done");
 
             sim_stat = sim_stat_enum.None;
         }

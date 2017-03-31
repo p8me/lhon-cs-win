@@ -28,6 +28,13 @@ namespace LHON_Form
     {
         // =============================== Model Preprocessing
 
+        bool touch_mode_8 = false; // false: 4, true: 8
+
+        int calc_im_siz()
+        {
+            return (int)(((mdl.nerve_r * setts.resolution) * 2 + 1) / threads_per_block_1D + 1) * threads_per_block_1D;
+        }
+
         private void preprocess_model()
         {
             // Requires full Model info and assigns tox, rate, etc
@@ -37,7 +44,7 @@ namespace LHON_Form
 
             update_bottom_stat("Preprocessing ...");
 
-            im_size = (int)((((mdl.nerve_r + nerve_clear) * setts.resolution) * 2) / threads_per_block_1D + 1) * threads_per_block_1D;
+            im_size = calc_im_siz();
 
             update_image_siz_lbl();
 
@@ -51,7 +58,6 @@ namespace LHON_Form
             rate_init = new float[im_size, im_size];
             detox_init = new float[im_size, im_size];
             locked_pix_init = new byte[im_size, im_size];
-            bool[,] cant_be_touch_pix = new bool[im_size, im_size];
 
             // ======== Image Properties Initialization =========
             int nerve_cent_pix = im_size / 2;
@@ -63,6 +69,7 @@ namespace LHON_Form
                 int dy = y - nerve_cent_pix;
                 return r * r - (dx * dx + dy * dy);
             };
+
             alg_prof.time(1);
             for (int y = 0; y < im_size; y++)
                 for (int x = 0; x < im_size; x++)
@@ -80,13 +87,13 @@ namespace LHON_Form
 
             // Assign max memory
             max_set_size_bound = (int)(2.2 * mdl.max_r_abs * setts.resolution * 3.14);
-            max_set_size_bound_touch = (int)(2.8 * mdl.max_r_abs * setts.resolution * 3.14);
+            max_set_size_bound_touch = (int)(mdl.max_r_abs * setts.resolution * 3.14 * 20);
             int max_pixels_in_nerve = (int)(Math.Pow(mdl.nerve_r * setts.resolution, 2) * Math.PI) -
                 (int)(Math.Pow(mdl.nerve_r * mdl.vein_rat * setts.resolution, 2) * Math.PI);
 
             // ======== Individual Neuron Properties =========
 
-            int[,,] axons_bound_pix = new int[mdl.n_neurs, max_set_size_bound, 2];
+            //int[,,] axons_bound_pix = new int[mdl.n_neurs, max_set_size_bound, 2];
             int[] axons_bound_npix = new int[mdl.n_neurs];
             axons_inside_pix = new ushort[max_pixels_in_nerve, 2];
             axons_inside_pix_idx = new int[mdl.n_neurs + 1];
@@ -118,6 +125,8 @@ namespace LHON_Form
                 {
                     show_neur_lvl[i] = mdl.neur_cor[i][2] > mdl.max_r;
 
+                    float detox_resolution = detox_val / (float)Math.Pow(setts.resolution, 2);
+                    
                     float xc = nerve_cent_pix + mdl.neur_cor[i][0] * setts.resolution;
                     float yc = nerve_cent_pix + mdl.neur_cor[i][1] * setts.resolution;
                     float rc = mdl.neur_cor[i][2] * setts.resolution;
@@ -133,14 +142,38 @@ namespace LHON_Form
 
                     axons_inside_pix_idx[i + 1] = axons_inside_pix_idx[i];
 
-                    for (int y = Max((int)(yc - rc) - 1, 0); y <= yc + rc + 1 && y < im_size; y++)
-                        for (int x = Max((int)(xc - rc) - 1, 0); x <= xc + rc + 1 && x < im_size; x++)
-                        {
-                            float wc = within_circle2(x, y, xc, yc, rc);
-                            bool inside = wc > 0;
-                            bool on_bound = Math.Abs(wc) <= rc;
+                    float extra_radius;
+                    if (!touch_mode_8)
+                        extra_radius = 1; // to find touch
+                    else
+                        extra_radius = 2; // to find touch
 
-                            if (inside || on_bound)
+
+                    float extra_box_siz = 2 * extra_radius;
+                    Func<float, float> extra_rad = (rad) => (2 * extra_radius * rad + extra_radius * extra_radius);
+
+                    float extra_siz = rc + extra_box_siz;
+
+                    int[] box_y = new int[] { Max((int)(yc - extra_siz), 0), Min((int)(yc + extra_siz), im_size) };
+                    int[] box_x = new int[] { Max((int)(xc - extra_siz), 0), Min((int)(xc + extra_siz), im_size) };
+
+                    int[] box_siz = new int[] { box_y[1] - box_y[0] + 1, box_x[1] - box_x[0] + 1 };
+
+                    float[,] dist = new float[box_siz[0], box_siz[1]];
+
+                    for (int y = box_y[0]; y <= box_y[1]; y++)
+                        for (int x = box_x[0]; x <= box_x[1]; x++)
+                            dist[y - box_y[0], x - box_x[0]] = within_circle2(x, y, xc, yc, rc);
+
+                    for (int y = box_y[0]; y <= box_y[1]; y++)
+                        for (int x = box_x[0]; x <= box_x[1]; x++)
+                        {
+                            Func<int, int, float> dst = (X, Y) => dist[Y - box_y[0], X - box_x[0]];
+
+                            bool inside = dst(x, y) > 0;
+                            bool on_bound = dst(x, y) <= 0 && dst(x, y) > -extra_rad(rc);
+
+                            if (inside)
                             {
                                 axons_inside_npix[i]++;
 
@@ -151,49 +184,37 @@ namespace LHON_Form
 
                                 locked_pix[x, y]++;
                                 tox[x, y] = 1;
-                                cant_be_touch_pix[x, y] = true;
 
-                                if (on_bound) // if it's a cell boundary
-                                {
-                                    axons_bound_pix[i, axons_bound_npix[i], 0] = x;
-                                    axons_bound_pix[i, axons_bound_npix[i]++, 1] = y;
-                                }
+                                rate[x, y] = setts.neur_rate;
+                            }
+                            if (on_bound) // if it's a cell boundary
+                            {
+                                //axons_bound_pix[i, axons_bound_npix[i], 0] = x;
+                                //axons_bound_pix[i, axons_bound_npix[i]++, 1] = y;
+
+                                int[,] arr;
+                                if (!touch_mode_8)
+                                    arr = new int[,] { { x + 1, y }, { x - 1, y }, { x, y + 1 }, { x, y - 1 } };
                                 else
-                                    rate[x, y] = setts.neur_rate;
+                                    arr = new int[,] { { x + 1, y }, { x + 1, y + 1 }, { x + 1, y - 1 }, { x - 1, y }, { x - 1, y + 1 }, { x - 1, y - 1 }, { x, y + 1 }, { x, y - 1 } };
+                                
+                                for (int k = 0; k < arr.GetLength(0); k++)
+                                {
+                                    if (dst(arr[k, 0], arr[k, 1]) > 0)
+                                    {
+                                        axons_bound_touch_pix[i, axons_bound_touch_npix[i], 0] = x;
+                                        axons_bound_touch_pix[i, axons_bound_touch_npix[i]++, 1] = y;
+                                        touch_pix[x, y] = 1;
+                                        detox[x, y] = detox_resolution;
+                                    }
+                                }
                             }
                         }
+                    // Verify radius
+                    //Debug.WriteLine("{0} vs {1}", (Math.Pow(mdl.neur_cor[i][2] * setts.resolution, 2) * Math.PI).ToString("0.0"), axons_inside_pix_idx[i + 1] - axons_inside_pix_idx[i]);
                 }
 
                 alg_prof.time(3);
-
-                float detox_resolution = detox_val / (float)Math.Pow(setts.resolution, 2);
-
-                for (int i = 0; i < mdl.n_neurs; i++)
-                {
-                    for (int m = 0; m < axons_bound_npix[i]; m++)
-                    {
-                        int x = axons_bound_pix[i, m, 0];
-                        int y = axons_bound_pix[i, m, 1];
-
-                        int[,] arr = new int[4, 2] { { x + 1, y }, { x - 1, y }, { x, y + 1 }, { x, y - 1 } };
-
-                        for (int k = 0; k < 4; k++)
-                        {
-                            if (within_circle2(arr[k, 0], arr[k, 1],
-                                axons_coor[i, 0], axons_coor[i, 1], axons_coor[i, 2]) < 0)
-                            {
-                                if (!cant_be_touch_pix[arr[k, 0], arr[k, 1]])
-                                {
-                                    axons_bound_touch_pix[i, axons_bound_touch_npix[i], 0] = arr[k, 0];
-                                    axons_bound_touch_pix[i, axons_bound_touch_npix[i]++, 1] = arr[k, 1];
-                                    touch_pix[arr[k, 0], arr[k, 1]] = 1;
-                                    detox[arr[k, 0], arr[k, 1]] = detox_resolution;
-                                }
-                            }
-                        }
-                    }
-                }
-                alg_prof.time(4);
             }
 
             //catch (Exception e)

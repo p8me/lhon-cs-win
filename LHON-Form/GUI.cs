@@ -39,6 +39,8 @@ namespace LHON_Form
 
             txt_stop_itr.TextChanged += (s, e) => stop_iteration = read_int(s);
 
+            txt_block_siz.TextChanged += (s, e) => threads_per_block_1D = read_int(s);
+            
             btn_reset.Click += (s, e) =>
             {
                 if (rate == null)
@@ -249,11 +251,13 @@ namespace LHON_Form
             if (chk_neur_lvl.Checked)
             {
                 for (int i = 0; i < mdl.n_neurs; i++)
-                    if (live_neur[i] && tox_touch_neur[i] > 1)
+                    if (show_neur_lvl[i] && live_neur[i] && tox_touch_neur[i] > 1)
                     {
-                        if (tox_touch_neur_last[i] == tox_touch_neur[i]) continue;
-                        neur_lbl[i].lbl = (tox_touch_neur[i] / neur_tol[i] * 100).ToString("0");
-                        tox_touch_neur_last[i] = tox_touch_neur[i];
+                        if (Math.Abs(tox_touch_neur_last[i] - tox_touch_neur[i]) > 0.01)
+                        {
+                            neur_lbl[i].lbl = (tox_touch_neur[i] / neur_tol[i] * 100).ToString("0");
+                            tox_touch_neur_last[i] = tox_touch_neur[i];
+                        }
                     }
                     else if (i != first_neur_idx) neur_lbl[i].lbl = "";
             }
@@ -491,7 +495,7 @@ namespace LHON_Form
 
         int picB_offx, picB_offy;
         float picB_ratio;
-
+        
         private void picB_Resize(object sender, EventArgs e)
         {
             float picW = picB.Size.Width;
@@ -518,7 +522,7 @@ namespace LHON_Form
         private void picB_Paint(object sender, PaintEventArgs e)
         {
 
-            if (neur_lbl != null)
+            if (!show_neur_order_mdl_gen && neur_lbl != null)
             {
                 // the X on the first neuron
                 var nlbl0 = neur_lbl[first_neur_idx];
@@ -537,18 +541,21 @@ namespace LHON_Form
                     }
             }
 
-            //if (mdl_neur_lbl != null && mdl_neur_lbl.Length > 0)
-            //    for (int i = 0; i < mdl_n_neurs; i++)
-            //    {
-            //        var lbli = mdl_neur_lbl[i];
-            //        if (lbli != null)
-            //        {
-            //            SizeF textSize = e.Graphics.MeasureString(lbli.lbl, this.Font);
-            //            float x = lbli.x * picB_ratio + picB_offx - (textSize.Width / 2);
-            //            float y = lbli.y * picB_ratio + picB_offy - (textSize.Height / 2);
-            //            e.Graphics.DrawString(lbli.lbl, this.Font, Brushes.White, x, y);
-            //        }
-            //    }
+            if (show_neur_order_mdl_gen)
+            {
+                if (mdl_neur_lbl != null && mdl_neur_lbl.Length > 0)
+                    for (int i = 0; i < mdl_n_neurs; i++)
+                    {
+                        var lbli = mdl_neur_lbl[i];
+                        if (lbli != null)
+                        {
+                            SizeF textSize = e.Graphics.MeasureString(lbli.lbl, this.Font);
+                            float x = lbli.x * picB_ratio + picB_offx - (textSize.Width / 2);
+                            float y = lbli.y * picB_ratio + picB_offy - (textSize.Height / 2);
+                            e.Graphics.DrawString(lbli.lbl, this.Font, Brushes.White, x, y);
+                        }
+                    }
+            }
         }
 
         private void picB_Click(object sender, EventArgs e)

@@ -34,7 +34,7 @@ namespace LHON_Form
 
         float detox_val = 0.05F;
         
-        const int threads_per_block_1D = 32;
+        int threads_per_block_1D = 16;
         
         int nerve_clear = 4; // clearance of nerve from image borders in unit length
 
@@ -226,8 +226,8 @@ namespace LHON_Form
         
         private float within_circle2(int x, int y, float xc, float yc, float rc)
         {
-            float dx = x - xc;
-            float dy = y - yc;
+            float dx = (float)x - xc;
+            float dy = (float)y - yc;
             return rc * rc - (dx * dx + dy * dy);
         }
 

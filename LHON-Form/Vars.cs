@@ -195,7 +195,7 @@ namespace LHON_Form
                 Debug.WriteLine("Total: " + (tot_time / 1000).ToString("0.000") + "s");
                 for (int k = 0; k < T.Length; k++)
                     if (T[k] > 0)
-                        Debug.WriteLine("{0}:\t{1}%\t{2}ms\t{3}K >> {4}ms", k, (T[k] / tot_time * 100).ToString("00.0"), T[k].ToString("000000"), (num_occur[k]).ToString("0000"), (T[k]/num_occur[k]).ToString("000.000"));
+                        Debug.WriteLine("{0}:\t{1}%\t{2}ms\t{3}K >> {4}ms", k, (T[k] / tot_time * 100).ToString("00.0"), T[k].ToString("000000"), (num_occur[k]/1000).ToString("0000"), (T[k]/num_occur[k]).ToString("000.000"));
             }
         }
         profile_class gpu_prof = new profile_class(), alg_prof = new profile_class();

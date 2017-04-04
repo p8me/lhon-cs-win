@@ -5,27 +5,21 @@ extern "C" __global__  void cuda_calc_diff(int im_size, float* tox, float* rate,
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int x_y = x * im_size + y;
 
-	if (!locked_pix[x_y] && tox[x_y] > 0)
+	if (!locked_pix[x_y])
 	{
 		int x_y_1 = x_y + im_size;
 		int x_y_2 = x_y - im_size;
 		int x_y_3 = x_y + 1;
 		int x_y_4 = x_y - 1;
 
-		float rate_sum = 0;
-		if (!locked_pix[x_y_1]) rate_sum += rate[x_y_1];
-		if (!locked_pix[x_y_2]) rate_sum += rate[x_y_2];
-		if (!locked_pix[x_y_3]) rate_sum += rate[x_y_3];
-		if (!locked_pix[x_y_4]) rate_sum += rate[x_y_4];
+		float num_surr = 0;
+		float tox_gives = tox[x_y] / 4;
 
-		float tox_giving_away_portion = rate[x_y] * rate_sum / 4;
-		float tox_gives = tox[x_y] * tox_giving_away_portion / rate_sum;
+		if (!locked_pix[x_y_1]) {num_surr++; atomicAdd(&diff[x_y_1], tox_gives);}
+		if (!locked_pix[x_y_2]) {num_surr++; atomicAdd(&diff[x_y_2], tox_gives);}
+		if (!locked_pix[x_y_3]) {num_surr++; atomicAdd(&diff[x_y_3], tox_gives);}
+		if (!locked_pix[x_y_4]) {num_surr++; atomicAdd(&diff[x_y_4], tox_gives);}
 
-		if (!locked_pix[x_y_1]) atomicAdd(&diff[x_y_1], tox_gives * rate[x_y_1]);
-		if (!locked_pix[x_y_2]) atomicAdd(&diff[x_y_2], tox_gives * rate[x_y_2]);
-		if (!locked_pix[x_y_3]) atomicAdd(&diff[x_y_3], tox_gives * rate[x_y_3]);
-		if (!locked_pix[x_y_4]) atomicAdd(&diff[x_y_4], tox_gives * rate[x_y_4]);
-
-		tox[x_y] *= (1 - tox_giving_away_portion);
+		tox[x_y] *= (1 - num_surr / 4);
 	}
 }

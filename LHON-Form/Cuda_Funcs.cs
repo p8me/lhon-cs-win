@@ -76,6 +76,11 @@ namespace LHON_Form
         { }
 
         [CudafyDummy]
+        public static void cuda_diffusion(int im_size,
+            float[,] tox, float[,] rate, uint[,] locked_pix, float[,] diff)
+        { }
+
+        [CudafyDummy]
         public static void cuda_calc_tox(int im_size,
             float[,] tox, float[,] rate, float[,] detox, uint[,] locked_pix, float[,] diff)
         { }

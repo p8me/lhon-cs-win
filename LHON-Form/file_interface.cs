@@ -39,8 +39,8 @@ namespace LHON_Form
 
                 gpu.Set(progression_image_sum_float_dev);
                 gpu.Set(progress_image_num_averaged_pix_dev);
-                gpu.Launch(blocks_per_grid, threads_per_block).gpu_progress_image_1(tox_dev, locked_pix_dev, progression_image_sum_float_dev, progress_image_num_averaged_pix_dev, resolution_reduction_ratio);
-                gpu.Launch(new dim3(prog_im_siz, prog_im_siz), 1).gpu_progress_image_2(tox_dev, locked_pix_dev, progression_image_sum_float_dev, progress_image_num_averaged_pix_dev, progression_image_dev, prog_im_siz);
+                //gpu.Launch(blocks_per_grid, threads_per_block).gpu_progress_image_1(tox_dev, locked_pix_dev, progression_image_sum_float_dev, progress_image_num_averaged_pix_dev, resolution_reduction_ratio);
+                //gpu.Launch(new dim3(prog_im_siz, prog_im_siz), 1).gpu_progress_image_2(tox_dev, locked_pix_dev, progression_image_sum_float_dev, progress_image_num_averaged_pix_dev, progression_image_dev, prog_im_siz);
 
                 byte[,] progression_image = new byte[prog_im_siz, prog_im_siz];
                 gpu.CopyFromDevice(progression_image_dev, progression_image);
@@ -77,8 +77,6 @@ namespace LHON_Form
                     writer.Write(mdl.clearance);
                     writer.Write(mdl.n_neurs);
                     writer.Write(setts.resolution);
-                    writer.Write(setts.neur_tol_coeff);
-                    writer.Write(setts.neur_rate);
                     writer.Write(im_size);
                     writer.Write(prog_im_siz);
 

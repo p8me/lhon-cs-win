@@ -40,7 +40,7 @@ namespace LHON_Form
             txt_stop_itr.TextChanged += (s, e) => stop_iteration = read_int(s);
 
             txt_block_siz.TextChanged += (s, e) => threads_per_block_1D = read_int(s);
-            
+
             btn_reset.Click += (s, e) =>
             {
                 if (rate == null)
@@ -119,6 +119,8 @@ namespace LHON_Form
                 append_stat_ln("Snapshot saved to: " + adr);
                 bmp.Save(adr);
             };
+
+            txt_block_siz.Text = threads_per_block_1D.ToString("0");
         }
 
         void update_show_opts()
@@ -248,19 +250,19 @@ namespace LHON_Form
                 }
             }));
 
-            if (chk_neur_lvl.Checked)
-            {
-                for (int i = 0; i < mdl.n_neurs; i++)
-                    if (show_neur_lvl[i] && live_neur[i] && tox_touch_neur[i] > 1)
-                    {
-                        if (Math.Abs(tox_touch_neur_last[i] - tox_touch_neur[i]) > 0.01)
-                        {
-                            neur_lbl[i].lbl = (tox_touch_neur[i] / neur_tol[i] * 100).ToString("0");
-                            tox_touch_neur_last[i] = tox_touch_neur[i];
-                        }
-                    }
-                    else if (i != first_neur_idx) neur_lbl[i].lbl = "";
-            }
+            //if (chk_neur_lvl.Checked)
+            //{
+            //    for (int i = 0; i < mdl.n_neurs; i++)
+            //        if (show_neur_lvl[i] && live_neur[i] && tox_touch_neur[i] > 1)
+            //        {
+            //            if (Math.Abs(tox_touch_neur_last[i] - tox_touch_neur[i]) > 0.01)
+            //            {
+            //                neur_lbl[i].lbl = (tox_touch_neur[i] / neur_tol[i] * 100).ToString("0");
+            //                tox_touch_neur_last[i] = tox_touch_neur[i];
+            //            }
+            //        }
+            //        else if (i != first_neur_idx) neur_lbl[i].lbl = "";
+            //}
 
         }
 
@@ -273,7 +275,7 @@ namespace LHON_Form
             txt_max_rad.TextChanged += (s, e) => mdl.max_r = read_float(s);
             txt_min_rad.TextChanged += (s, e) => mdl.min_r = read_float(s);
             txt_clearance.TextChanged += (s, e) => mdl.clearance = read_float(s);
-            txt_num_tries.TextChanged += (s, e) => mdl.num_tries = read_float(s);
+            txt_circ_gen_ratio.TextChanged += (s, e) => mdl.circ_gen_ratio = read_float(s);
 
             txt_resolution.TextChanged += (s, e) =>
             {
@@ -281,9 +283,17 @@ namespace LHON_Form
                 float temp = setts.resolution * (mdl.max_r + mdl.min_r) / 2;
                 area_res_factor = Maxf(temp * temp * 2, 1F);
             };
-            txt_Tol.TextChanged += (s, e) => setts.neur_tol_coeff = read_float(s);
+            
+            txt_detox_extra.TextChanged += (s, e) => setts.detox_extra = read_float(s);
+            txt_detox_intra.TextChanged += (s, e) => setts.detox_intra = read_float(s);
 
-            txt_neur_rate.TextChanged += (s, e) => setts.neur_rate = read_float(s);
+            txt_rate_bound.TextChanged += (s, e) => setts.rate_bound = read_float(s);
+            txt_rate_dead.TextChanged += (s, e) => setts.rate_dead = read_float(s);
+            txt_rate_extra.TextChanged += (s, e) => setts.rate_extra = read_float(s);
+            txt_rate_live.TextChanged += (s, e) => setts.rate_live = read_float(s);
+
+            txt_prod_rate.TextChanged += (s, e) => setts.tox_prod = read_float(s);
+            
 
             btn_save_model.Click += (s, e) =>
             {
@@ -387,11 +397,19 @@ namespace LHON_Form
             txt_max_rad.Text = mdl.max_r.ToString();
             txt_min_rad.Text = mdl.min_r.ToString();
             txt_clearance.Text = mdl.clearance.ToString();
-            txt_num_tries.Text = mdl.num_tries.ToString();
+            txt_circ_gen_ratio.Text = mdl.circ_gen_ratio.ToString();
 
             txt_resolution.Text = setts.resolution.ToString();
-            txt_Tol.Text = setts.neur_tol_coeff.ToString();
-            txt_neur_rate.Text = setts.neur_rate.ToString();
+            txt_detox_extra.Text = setts.detox_extra.ToString();
+            txt_detox_intra.Text = setts.detox_intra.ToString();
+
+            txt_rate_bound.Text = setts.rate_bound.ToString();
+            txt_rate_dead.Text = setts.rate_dead.ToString();
+            txt_rate_extra.Text = setts.rate_extra.ToString();
+            txt_rate_live.Text = setts.rate_live.ToString();
+
+            txt_prod_rate.Text = setts.tox_prod.ToString();
+
         }
 
         float read_float(object o)
@@ -428,7 +446,7 @@ namespace LHON_Form
             if (reload_tox_dev)
             {
                 gpu.CopyToDevice(tox, tox_dev);
-                gpu.Launch(blocks_per_grid, threads_per_block).gpu_fill_bmp(tox_dev, bmp_dev, show_opts_dev, touch_pix_dev);
+                gpu.Launch(blocks_per_grid, threads_per_block).gpu_fill_bmp(tox_dev, bmp_dev, show_opts_dev);
                 gpu.CopyFromDevice(bmp_dev, bmp_bytes);
             }
 
@@ -436,31 +454,27 @@ namespace LHON_Form
                 for (int y = 0; y < im_size; y++)
                     for (int x = 0; x < im_size; x++)
                         fixed (byte* pix_addr = &bmp_bytes[y, x, 0])
-                            update_bmp_pix(tox[x, y], pix_addr, show_opts, touch_pix[x, y]);
+                            update_bmp_pix(tox[x, y], pix_addr, show_opts);
 
             update_bmp_from_bmp_bytes_and_rec();
         }
 
         [Cudafy]
-        unsafe public static bool update_bmp_pix(float tx, byte* pix_addr, bool[] opts, UInt16 touch)
+        unsafe public static bool update_bmp_pix(float tx, byte* pix_addr, bool[] opts)
         {
             int r = 0, g = 0, b = 0;
             int v = (int)(tx * 255);
 
-            if (touch == 1 && opts[0])
-                b = 255;
-            else
+            if (opts[1])
             {
-                if (opts[1])
-                {
-                    if (v < 64) { r = 0; g = 4 * v; b = 255; }
-                    else if (v < 128) { r = 0; b = 255 + 4 * (64 - v); g = 255; }
-                    else if (v < 192) { r = 4 * (v - 128); b = 0; g = 255; }
-                    else { g = 255 + 4 * (192 - v); b = 0; r = 255; }
-                }
-                else
-                    r = 255 - v;
+                if (v < 64) { r = 0; g = 4 * v; b = 255; }
+                else if (v < 128) { r = 0; b = 255 + 4 * (64 - v); g = 255; }
+                else if (v < 192) { r = 4 * (v - 128); b = 0; g = 255; }
+                else { g = 255 + 4 * (192 - v); b = 0; r = 255; }
             }
+            else
+                r = 255 - v;
+
 
             pix_addr[0] = (byte)b;
             pix_addr[1] = (byte)g;
@@ -495,7 +509,7 @@ namespace LHON_Form
 
         int picB_offx, picB_offy;
         float picB_ratio;
-        
+
         private void picB_Resize(object sender, EventArgs e)
         {
             float picW = picB.Size.Width;

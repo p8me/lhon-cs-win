@@ -130,7 +130,7 @@ namespace LHON_Form
 
             mdl_resolution = 25; // 8 / mdl.clearance;
 
-            im_size = (int)(mdl.nerve_r * 2 * mdl_resolution);
+            im_size = (ushort)(mdl.nerve_r * 2 * mdl_resolution);
 
             mdl_occupied = new bool[im_size, im_size];
 
@@ -150,7 +150,7 @@ namespace LHON_Form
 
             tic();
 
-            int num_tries = (int)(mdl.num_tries * mdl.nerve_r * mdl.nerve_r);
+            int num_tries = (int)(mdl.circ_gen_ratio * mdl.nerve_r * mdl.nerve_r);
 
             for (int i = 0; i < num_tries; i++)
             {

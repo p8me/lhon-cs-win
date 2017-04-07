@@ -10,15 +10,6 @@ extern "C" __global__  void cuda_update_live(int im_size, int n_neurs, float* to
 	{
 		if (live_neur[n])
 		{
-			tox_touch_neur[n] = 0;
-			for (int p = 0; p < axons_bound_touch_npix[n]; p++)
-			{
-				int idx_x = (n * max_set_size_bound_touch + p) * 2;
-				int idx = axons_bound_touch_pix[idx_x] * im_size + axons_bound_touch_pix[idx_x + 1];
-				if (locked_pix[idx] == 0)
-					tox_touch_neur[n] += tox[idx];
-			}
-
 			if (tox_touch_neur[n] > neur_tol[n])
 			{ 	// Kill the axon
 				for (int p = axons_inside_pix_idx[n]; p < axons_inside_pix_idx[n + 1]; p++)

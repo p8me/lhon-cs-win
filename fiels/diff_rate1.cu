@@ -5,7 +5,7 @@ extern "C" __global__  void cuda_calc_diff(int im_size, float* tox, float* rate,
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int x_y = x * im_size + y;
 
-	if (!locked_pix[x_y])
+	if (!locked_pix[x_y] && tox[x_y] > 0)
 	{
 		int x_y_1 = x_y + im_size;
 		int x_y_2 = x_y - im_size;

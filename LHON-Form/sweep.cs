@@ -211,12 +211,6 @@ namespace LHON_Form
                 case param_select.Resolution:
                     setts.resolution = val;
                     break;
-                case param_select.Tolerance:
-                    setts.neur_tol_coeff = val;
-                    break;
-                case param_select.Neur_Rate:
-                    setts.neur_rate = val;
-                    break;
                 case param_select.Insult_Rad:
                     init_insult[0] = mdl.nerve_r * (val * 2 - 1);
                     init_insult[1] = 0;

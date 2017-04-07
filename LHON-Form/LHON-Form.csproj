@@ -123,8 +123,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <None Include="Cuda\cuda_calc_diff.cu" />
-    <None Include="Cuda\cuda_calc_tox.cu" />
     <None Include="Cuda\cuda_diffusion.cu" />
     <None Include="Cuda\cuda_update_live.cu" />
     <None Include="packages.config" />

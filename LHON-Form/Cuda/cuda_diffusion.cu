@@ -1,29 +1,29 @@
 ﻿
-extern "C" __global__  void cuda_calc_diff(int im_size, float* tox, float* rate, unsigned char* locked_pix, float* diff)
+extern "C" __global__  void cuda_diffusion(unsigned int im_size, float* tox, float* rate, float* detox, float* tox_prod)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;
 	int x_y = x * im_size + y;
 
-	if (!locked_pix[x_y] && tox[x_y] > 0)
-	{
-		int x_y_1 = x_y + im_size;
-		int x_y_2 = x_y - im_size;
-		int x_y_3 = x_y + 1;
-		int x_y_4 = x_y - 1;
+	int x_y_1 = x_y + im_size;
+	int x_y_2 = x_y - im_size;
+	int x_y_3 = x_y + 1;
+	int x_y_4 = x_y - 1;
+	int x_y4 = 4 * x_y;
 
-		float rate_sum = 0;
+	float t = tox[x_y];
 
-		float rate_4 = rate[x_y] / 4;
-		float tox_gives = tox[x_y] * rate_4;
+	tox[x_y] +=
+		(tox[x_y_1] - t) * rate[x_y4] +
+		(tox[x_y_2] - t) * rate[x_y4 + 1] +
+		(tox[x_y_3] - t) * rate[x_y4 + 2] +
+		(tox[x_y_4] - t) * rate[x_y4 + 3];
+	
+	tox[x_y] += tox_prod[x_y];
 
-		if (!locked_pix[x_y_1]) { rate_sum += rate[x_y_1]; atomicAdd(&diff[x_y_1], tox_gives * rate[x_y_1]); }
-		if (!locked_pix[x_y_2]) { rate_sum += rate[x_y_2]; atomicAdd(&diff[x_y_2], tox_gives * rate[x_y_2]); }
-		if (!locked_pix[x_y_3]) { rate_sum += rate[x_y_3]; atomicAdd(&diff[x_y_3], tox_gives * rate[x_y_3]); }
-		if (!locked_pix[x_y_4]) { rate_sum += rate[x_y_4]; atomicAdd(&diff[x_y_4], tox_gives * rate[x_y_4]); }
+	tox[x_y] *= detox[x_y];
 
-		float tox_giving_away_portion = rate_4 * rate_sum;
-
-		tox[x_y] *= (1 - tox_giving_away_portion);
-	}
+	// 12 float operations
+	// 14 int operations (including indices)
+	// 10 array addressing
 }

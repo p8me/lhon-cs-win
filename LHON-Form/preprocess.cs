@@ -1,43 +1,108 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using AviFile;
-using System.Drawing.Drawing2D;
-using System.Xml.Serialization;
-using System.IO;
-
-using Cudafy;
-using Cudafy.Host;
-using Cudafy.Atomics;
-using Cudafy.Translator;
-using System.Runtime.InteropServices;
-using MathNet.Numerics.Distributions;
 
 namespace LHON_Form
 {
     public partial class Main_Form
     {
-        // =============================== Model Preprocessing
 
-        bool touch_mode_8 = false; // false: 4, true: 8
+        /* Units:
+        Constant         UI Unit        Algorithm Unit
+        k_detox          1 / sec         1 / itr
+        k_rate           1 / sec         1 / itr
+        k_tox_prod       c / sec         c / itr
+        */
 
-        int calc_im_siz()
+        float k_detox_intra;
+
+        float k_detox_extra;
+
+        float k_tox_prod;
+
+        float k_rate_live_axon;
+
+        float k_rate_boundary;
+
+        float k_rate_dead_axon;
+
+        float k_rate_extra = 1F / 5F; // extracellular rate
+
+        // ====================================
+        //              Variables
+        // ====================================
+
+        // Tox
+        float[,] tox, tox_init, tox_dev;
+
+        // Rate
+        float[,,] rate, rate_init, rate_dev;
+
+        // Detox
+        float[,] detox, detox_init, detox_dev;
+
+        // Tox_prod
+        float[,] tox_prod, tox_prod_init, tox_prod_dev;
+
+        // Center pixel of each axon
+        uint[] axons_cent_pix, axons_cent_pix_dev;
+
+        uint[] axons_inside_pix, axons_inside_pix_dev;
+
+        uint[] axons_inside_pix_idx, axons_inside_pix_idx_dev;
+
+        uint[] axons_inside_npix, death_itr, axons_inside_npix_dev, death_itr_dev;
+
+        uint[] pix_idx, pix_idx_dev;
+        uint pix_idx_num;
+
+        bool[] live_neur, live_neur_dev;
+        int[] num_live_neur = new int[1], num_live_neur_dev;
+
+        float[,] axons_coor;
+        bool[] show_neur_lvl;
+
+        // ====================================
+        //        Model Preprocessing
+        // ====================================
+
+        ushort calc_im_siz()
         {
-            return (int)(((mdl.nerve_r * setts.resolution) * 2 + 1) / threads_per_block_1D + 1) * threads_per_block_1D;
+            return (ushort)((((mdl.nerve_r * setts.resolution) * 2 + 1) / threads_per_block_1D + 1) * threads_per_block_1D);
         }
 
+        // Requires full Model info and assigns tox, rate, etc
         private void preprocess_model()
         {
-            // Requires full Model info and assigns tox, rate, etc
+            // Init constants
+
+            float max_res = 10;
+
+            float res2 = setts.resolution * setts.resolution;
+
+            float rate_and_detox_conv = res2 / (max_res * max_res);
+
+            float tox_prod_conv = res2 * res2 / (max_res * max_res * max_res * max_res);
+
+            // "setts" are user input with physical units
+
+            // 1 - real detox rate to reduce computation ->  tox[x_y] *= detox[x_y]
+
+            k_detox_intra = (1F - setts.detox_intra) * rate_and_detox_conv;
+
+            k_detox_extra = (1F - setts.detox_extra) * rate_and_detox_conv;
+
+            k_tox_prod = setts.tox_prod * tox_prod_conv;
+
+            // User inputs 0 to 1 for rate values
+
+            k_rate_live_axon = setts.rate_live / 5F * rate_and_detox_conv;
+
+            k_rate_boundary = setts.rate_bound / 5F * rate_and_detox_conv;
+
+            k_rate_dead_axon = setts.rate_dead / 5F * rate_and_detox_conv;
+
+            k_rate_extra = setts.rate_extra / 5F * rate_and_detox_conv;
+
 
             alg_prof.time(0);
             tic();
@@ -51,13 +116,19 @@ namespace LHON_Form
             init_bmp_write();
 
             // ======== Image Properties =========
-            rate = new float[im_size, im_size];
+            rate = new float[im_size, im_size, 4];
+            rate_init = new float[im_size, im_size, 4];
+
             detox = new float[im_size, im_size];
-            locked_pix = new byte[im_size, im_size];
-            tox_init = new float[im_size, im_size];
-            rate_init = new float[im_size, im_size];
             detox_init = new float[im_size, im_size];
-            locked_pix_init = new byte[im_size, im_size];
+
+            tox = new float[im_size, im_size];
+            tox_init = new float[im_size, im_size];
+
+            tox_prod = new float[im_size, im_size];
+            tox_prod_init = new float[im_size, im_size];
+
+            axons_cent_pix = new uint[im_size * im_size];
 
             // ======== Image Properties Initialization =========
             int nerve_cent_pix = im_size / 2;
@@ -71,167 +142,133 @@ namespace LHON_Form
             };
 
             alg_prof.time(1);
-            for (int y = 0; y < im_size; y++)
-                for (int x = 0; x < im_size; x++)
-                {
-                    if (within_circle2_int(x, y, nerve_r_pix) < 0 || within_circle2_int(x, y, vein_r_pix) > 0)
-                    { rate[x, y] = 0; locked_pix[x, y]++; }
-                    else rate[x, y] = 1F;
-                }
-
-            alg_prof.time(2);
 
             // ======== Common Neuron Properties (+Initialization) =========
 
             update_n_neur_lbl();
 
             // Assign max memory
-            max_set_size_bound = (int)(2.2 * mdl.max_r_abs * setts.resolution * 3.14);
-            max_set_size_bound_touch = (int)(mdl.max_r_abs * setts.resolution * 3.14 * 20);
             int max_pixels_in_nerve = (int)(Math.Pow(mdl.nerve_r * setts.resolution, 2) * Math.PI) -
                 (int)(Math.Pow(mdl.nerve_r * mdl.vein_rat * setts.resolution, 2) * Math.PI);
 
             // ======== Individual Neuron Properties =========
 
-            //int[,,] axons_bound_pix = new int[mdl.n_neurs, max_set_size_bound, 2];
-            int[] axons_bound_npix = new int[mdl.n_neurs];
-            axons_inside_pix = new ushort[max_pixels_in_nerve, 2];
-            axons_inside_pix_idx = new int[mdl.n_neurs + 1];
-
+            axons_inside_pix = new uint[max_pixels_in_nerve];
+            axons_inside_pix_idx = new uint[mdl.n_neurs + 1];
             axons_inside_npix = new uint[mdl.n_neurs];
-            axons_bound_touch_pix = new int[mdl.n_neurs, max_set_size_bound_touch, 2];
-            axons_bound_touch_npix = new uint[mdl.n_neurs];
 
             show_neur_lvl = new bool[mdl.n_neurs];
 
             live_neur = new bool[mdl.n_neurs];
             death_itr = new uint[mdl.n_neurs];
-            neur_tol = new float[mdl.n_neurs];
-            tox_touch_neur = new float[mdl.n_neurs];
-            tox_touch_neur_last = new float[mdl.n_neurs];
 
             neur_lbl = new neur_lbl_class[mdl.n_neurs];
 
+            axons_coor = new float[mdl.n_neurs, 3];
 
             // ======== Individual Neuron Properties Initialization =========
 
-            axons_coor = new float[mdl.n_neurs, 3];
+            bool[,] occupied = new bool[im_size, im_size];
 
-            int inside_neur_arr_cnt = 0;
+            int inside_axon_arr_cnt = 0;
 
-            //try
+            for (int i = 0; i < mdl.n_neurs; i++)
             {
-                for (int i = 0; i < mdl.n_neurs; i++)
-                {
-                    show_neur_lvl[i] = mdl.neur_cor[i][2] > mdl.max_r;
+                show_neur_lvl[i] = mdl.neur_cor[i][2] > mdl.max_r;
 
-                    float detox_resolution = detox_val / (float)Math.Pow(setts.resolution, 2);
-                    
-                    float xc = nerve_cent_pix + mdl.neur_cor[i][0] * setts.resolution;
-                    float yc = nerve_cent_pix + mdl.neur_cor[i][1] * setts.resolution;
-                    float rc = mdl.neur_cor[i][2] * setts.resolution;
+                // Change coordinates from um to pixels
+                float xc = nerve_cent_pix + mdl.neur_cor[i][0] * setts.resolution;
+                float yc = nerve_cent_pix + mdl.neur_cor[i][1] * setts.resolution;
+                float rc = mdl.neur_cor[i][2] * setts.resolution;
 
-                    axons_coor[i, 0] = xc; axons_coor[i, 1] = yc; axons_coor[i, 2] = rc;
+                axons_coor[i, 0] = xc; axons_coor[i, 1] = yc; axons_coor[i, 2] = rc;
 
-                    live_neur[i] = true;
-                    death_itr[i] = 0;
+                live_neur[i] = true;
+                death_itr[i] = 0;
 
-                    neur_tol[i] = mdl.neur_cor[i][2] * mdl.neur_cor[i][2] * setts.neur_tol_coeff * setts.resolution;
+                axons_cent_pix[i] = (uint)xc * im_size + (uint)yc;
 
-                    neur_lbl[i] = new neur_lbl_class { lbl = "", x = xc, y = yc };
+                neur_lbl[i] = new neur_lbl_class { lbl = "", x = xc, y = yc };
 
-                    axons_inside_pix_idx[i + 1] = axons_inside_pix_idx[i];
+                axons_inside_pix_idx[i + 1] = axons_inside_pix_idx[i];
 
-                    float extra_radius;
-                    if (!touch_mode_8)
-                        extra_radius = 1; // to find touch
-                    else
-                        extra_radius = 2; // to find touch
+                float extra_siz = 2 + rc;
 
+                int[] box_y = new int[] { Max((int)(yc - extra_siz), 0), Min((int)(yc + extra_siz), im_size) };
+                int[] box_x = new int[] { Max((int)(xc - extra_siz), 0), Min((int)(xc + extra_siz), im_size) };
 
-                    float extra_box_siz = 2 * extra_radius;
-                    Func<float, float> extra_rad = (rad) => (2 * extra_radius * rad + extra_radius * extra_radius);
+                int[] box_siz = new int[] { box_y[1] - box_y[0] + 1, box_x[1] - box_x[0] + 1 };
 
-                    float extra_siz = rc + extra_box_siz;
+                float[,] dist = new float[box_siz[0], box_siz[1]];
 
-                    int[] box_y = new int[] { Max((int)(yc - extra_siz), 0), Min((int)(yc + extra_siz), im_size) };
-                    int[] box_x = new int[] { Max((int)(xc - extra_siz), 0), Min((int)(xc + extra_siz), im_size) };
+                for (int y = box_y[0]; y <= box_y[1]; y++)
+                    for (int x = box_x[0]; x <= box_x[1]; x++)
+                        dist[y - box_y[0], x - box_x[0]] = within_circle2(x, y, xc, yc, rc);
 
-                    int[] box_siz = new int[] { box_y[1] - box_y[0] + 1, box_x[1] - box_x[0] + 1 };
+                for (int y = box_y[0]; y <= box_y[1]; y++)
+                    for (int x = box_x[0]; x <= box_x[1]; x++)
+                    {
+                        Func<int, int, float> dst = (X, Y) => dist[Y - box_y[0], X - box_x[0]];
 
-                    float[,] dist = new float[box_siz[0], box_siz[1]];
+                        bool inside = dst(x, y) > 0;
 
-                    for (int y = box_y[0]; y <= box_y[1]; y++)
-                        for (int x = box_x[0]; x <= box_x[1]; x++)
-                            dist[y - box_y[0], x - box_x[0]] = within_circle2(x, y, xc, yc, rc);
+                        if (inside)
+                        { // inside axon
+                            axons_inside_npix[i]++;
+                            axons_inside_pix[inside_axon_arr_cnt] = (uint)x * im_size + (uint)y;
+                            axons_inside_pix_idx[i + 1]++;
+                            inside_axon_arr_cnt++;
 
-                    for (int y = box_y[0]; y <= box_y[1]; y++)
-                        for (int x = box_x[0]; x <= box_x[1]; x++)
-                        {
-                            Func<int, int, float> dst = (X, Y) => dist[Y - box_y[0], X - box_x[0]];
+                            occupied[x, y] = true;
+                            //tox[x, y] = 1F;
 
-                            bool inside = dst(x, y) > 0;
-                            bool on_bound = dst(x, y) <= 0 && dst(x, y) > -extra_rad(rc);
-
-                            if (inside)
-                            {
-                                axons_inside_npix[i]++;
-
-                                axons_inside_pix[inside_neur_arr_cnt, 0] = (ushort)x;
-                                axons_inside_pix[inside_neur_arr_cnt, 1] = (ushort)y;
-                                axons_inside_pix_idx[i + 1]++;
-                                inside_neur_arr_cnt++;
-
-                                locked_pix[x, y]++;
-                                tox[x, y] = 1;
-
-                                rate[x, y] = setts.neur_rate;
-                            }
-                            if (on_bound) // if it's a cell boundary
-                            {
-                                //axons_bound_pix[i, axons_bound_npix[i], 0] = x;
-                                //axons_bound_pix[i, axons_bound_npix[i]++, 1] = y;
-
-                                int[,] arr;
-                                if (!touch_mode_8)
-                                    arr = new int[,] { { x + 1, y }, { x - 1, y }, { x, y + 1 }, { x, y - 1 } };
-                                else
-                                    arr = new int[,] { { x + 1, y }, { x + 1, y + 1 }, { x + 1, y - 1 }, { x - 1, y }, { x - 1, y + 1 }, { x - 1, y - 1 }, { x, y + 1 }, { x, y - 1 } };
-                                
-                                for (int k = 0; k < arr.GetLength(0); k++)
-                                {
-                                    if (dst(arr[k, 0], arr[k, 1]) > 0)
-                                    {
-                                        axons_bound_touch_pix[i, axons_bound_touch_npix[i], 0] = x;
-                                        axons_bound_touch_pix[i, axons_bound_touch_npix[i]++, 1] = y;
-                                        touch_pix[x, y] = 1;
-                                        detox[x, y] = detox_resolution;
-                                    }
-                                }
-                            }
+                            tox_prod[x, y] = k_tox_prod;
+                            detox[x, y] = k_detox_intra;
                         }
-                    // Verify radius
-                    //Debug.WriteLine("{0} vs {1}", (Math.Pow(mdl.neur_cor[i][2] * setts.resolution, 2) * Math.PI).ToString("0.0"), axons_inside_pix_idx[i + 1] - axons_inside_pix_idx[i]);
-                }
-
-                alg_prof.time(3);
+                        else // outside axon
+                            detox[x, y] = k_detox_extra;
+                    }
+                // Verify radius
+                // Debug.WriteLine("{0} vs {1}", (Math.Pow(mdl.neur_cor[i][2] * setts.resolution, 2) * Math.PI).ToString("0.0"), axons_inside_pix_idx[i + 1] - axons_inside_pix_idx[i]);
             }
 
-            //catch (Exception e)
-            //{
-            //    MessageBox.Show(e.ToString() + "\nChange Settings!");
-            //    setts.Show();
-            //    return;
-            //}
+            alg_prof.time(3);
+
+            pix_idx = new uint[im_size * im_size];
+            pix_idx_num = 0;
+
+            // ================== Assign Rates
+            for (int y = 0; y < im_size; y++)
+                for (int x = 0; x < im_size; x++)
+                {
+                    if (within_circle2_int(x, y, nerve_r_pix) < 0 || within_circle2_int(x, y, vein_r_pix) > 0)
+                    { // Outside nerve area
+                        for (int k = 0; k < 4; k++)
+                            rate[x, y, k] = 0;
+                    }
+                    else
+                    {  // Inside nerve area
+                        pix_idx[pix_idx_num++] += (uint)x * im_size + (uint)y;
+                        int[,] arr = new int[,] { { x + 1, y }, { x - 1, y }, { x, y + 1 }, { x, y - 1 } };
+
+                        if (occupied[x, y])
+                            for (int k = 0; k < 4; k++)
+                                rate[x, y, k] = occupied[arr[k, 0], arr[k, 1]] ? k_rate_live_axon : k_rate_boundary;
+                        else
+                            for (int k = 0; k < 4; k++)
+                                rate[x, y, k] = occupied[arr[k, 0], arr[k, 1]] ? k_rate_boundary : k_rate_extra;
+                    }
+                }
+
 
             areal_progress_lim = 0;
             int temp = 0;
 
-            // Keep back up of inital state
+            // Keep backup of inital state
             tox_init = (float[,])tox.Clone();
-            rate_init = (float[,])rate.Clone();
+            rate_init = (float[,,])rate.Clone();
             detox_init = (float[,])detox.Clone();
-            locked_pix_init = (byte[,])locked_pix.Clone();
+            tox_prod_init = (float[,])tox_prod.Clone();
 
             /* SCREW_GUI
             for (int y = 0; y < im_size; y++)
@@ -251,10 +288,7 @@ namespace LHON_Form
 
             update_bottom_stat("Preprocess Done! (" + (toc() / 1000).ToString("0.0") + " secs)");
 
-            Debug.WriteLine("inside: {0} vs allocated {1}", inside_neur_arr_cnt, axons_inside_pix.Length / 2);
-            Debug.WriteLine("bound: {0} vs allocated {1}", axons_bound_npix.Max(), max_set_size_bound);
-            Debug.WriteLine("bound-touch: {0} vs allocated {1}", axons_bound_touch_npix.Max(), max_set_size_bound_touch);
-
+            Debug.WriteLine("inside: {0} vs allocated {1}", inside_axon_arr_cnt, axons_inside_pix.Length);
 
             alg_prof.report();
 

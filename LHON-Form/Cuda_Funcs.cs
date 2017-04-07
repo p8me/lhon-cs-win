@@ -69,21 +69,12 @@ namespace LHON_Form
             float[] tox_touch_neur, float[] neur_tol, int[,,] axons_bound_touch_pix, int[] axons_bound_touch_npix,
             ushort[,] axons_inside_pix, int[] axons_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr)
         { }
-
-        [CudafyDummy]
-        public static void cuda_calc_diff(int im_size,
-            float[,] tox, float[,] rate, uint[,] locked_pix, float[,] diff)
-        { }
-
+        
         [CudafyDummy]
         public static void cuda_diffusion(int im_size,
-            float[,] tox, float[,] rate, uint[,] locked_pix, float[,] diff)
+            float[,] tox, float[,,] rate,  float[,] detox, float[,] tox_prod)
         { }
-
-        [CudafyDummy]
-        public static void cuda_calc_tox(int im_size,
-            float[,] tox, float[,] rate, float[,] detox, uint[,] locked_pix, float[,] diff)
-        { }
+        
 
 
         // ======================================================================
@@ -132,13 +123,13 @@ namespace LHON_Form
         }
 
         [Cudafy]
-        unsafe public static void gpu_fill_bmp(GThread thread, float[,] tox, byte[,,] bmp, bool[] show_opts, UInt16[,] touch)
+        unsafe public static void gpu_fill_bmp(GThread thread, float[,] tox, byte[,,] bmp, bool[] show_opts)
         {
             int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x;
             int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y;
 
             fixed (byte* pix_addr = &bmp[y, x, 0])
-                update_bmp_pix(tox[x, y], pix_addr, show_opts, touch[x, y]);
+                update_bmp_pix(tox[x, y], pix_addr, show_opts);
         }
 
         [Cudafy]

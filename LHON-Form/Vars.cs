@@ -31,10 +31,8 @@ namespace LHON_Form
         // Used as measure of comparison
         const float real_model_nerve_r = 750; // um
         const int real_model_num_neurs = 1200000;
-
-        float detox_val = 0.05F;
         
-        int threads_per_block_1D = 16;
+        int threads_per_block_1D = 8;
         
         int nerve_clear = 4; // clearance of nerve from image borders in unit length
 
@@ -48,21 +46,15 @@ namespace LHON_Form
         VideoStream aviStream;
 
         int first_neur_idx = 0;
-
-        int max_set_size_bound, max_set_size_bound_touch;
-
+        
         Bitmap bmp;
-        int im_size;
+        ushort im_size;
         IntPtr bmp_scan0;
         byte[,,] bmp_bytes;
 
         bool[] show_opts = new bool[2],
             show_opts_dev = new bool[2];
-
-        float[,] tox, tox_init, tox_dev;
         
-        byte[,] locked_pix, locked_pix_dev, locked_pix_init;
-
         float sum_tox, areal_progress, chron_progress;
         float[] progress_dat = new float[3];
 
@@ -82,38 +74,10 @@ namespace LHON_Form
 
         bool stop_sweep_req = false, sweep_is_running = false;
 
-        float[,] diff_dev;
         float[] sum_tox_dev, progress_dev;
 
-        float[,] rate, rate_init, detox, detox_init,
-            rate_dev, detox_dev;
-
-        ushort[,] touch_pix,
-            touch_pix_dev;
-
         uint iteration = 0;
-
-        float[,] axons_coor;
-
-        ushort[,] axons_inside_pix, axons_inside_pix_dev;
-        int[] axons_inside_pix_idx, axons_inside_pix_idx_dev;
-
-        int[,,] axons_bound_touch_pix, axons_bound_touch_pix_dev;
-
-        uint[] axons_inside_npix, axons_bound_touch_npix, death_itr,
-            axons_inside_npix_dev, axons_bound_touch_npix_dev, death_itr_dev;
-
-        bool[] live_neur,
-            live_neur_dev;
-
-        int[] num_live_neur_dev, num_live_neur = new int[1];
-
-        bool[] show_neur_lvl;
-
-        float[] neur_tol, tox_touch_neur, tox_touch_neur_last,
-            neur_tol_dev, tox_touch_neur_dev;
-
-
+        
         float area_res_factor = 1;
 
         float[] init_insult = new float[2] { 0, 0 };
@@ -140,15 +104,22 @@ namespace LHON_Form
                 max_r_abs,
                 clearance;
             public int n_neurs;
-            public float num_tries;
+            public float circ_gen_ratio;
             public List<float[]> neur_cor;
         }
 
         public class Setts
         {
             public float resolution;
-            public float neur_tol_coeff;
-            public float neur_rate;
+
+            public float rate_live;
+            public float rate_dead;
+            public float rate_bound;
+            public float rate_extra;
+
+            public float tox_prod;
+            public float detox_intra;
+            public float detox_extra;
         }
 
         Model mdl = new Model();

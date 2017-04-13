@@ -51,7 +51,7 @@ namespace LHON_Form
 
         ushort calc_im_siz()
         {
-            return (ushort)((((mdl.nerve_r * setts.resolution) * 2 + 1) / threads_per_block_1D + 1) * threads_per_block_1D);
+            return (ushort)((((mdl_nerve_r * setts.resolution) * 2 + 1) / threads_per_block_1D + 1) * threads_per_block_1D);
         }
 
 
@@ -64,36 +64,28 @@ namespace LHON_Form
                 return;
             }
 
+            mdl_nerve_r = mdl.nerve_scale_ratio * mdl_real_nerve_r;
+
             // Init constants
 
             float max_res = 10F;
 
             float res2_fact = setts.resolution * setts.resolution / (max_res * max_res);
-
             float rate_and_detox_conv = 1F / res2_fact;
-
             float tox_prod_conv = 1F / (res2_fact * res2_fact);
 
             // "setts" are user input with physical units
 
             // 1 - real detox rate to reduce computation ->  tox[x_y] *= detox[x_y]
-
             k_detox_intra = (1F - setts.detox_intra) * rate_and_detox_conv;
-
             k_detox_extra = (1F - setts.detox_extra) * rate_and_detox_conv;
-
             k_tox_prod = setts.tox_prod * tox_prod_conv;
 
             // User inputs 0 to 1 for rate values
-
             k_rate_live_axon = setts.rate_live / 5F * rate_and_detox_conv;
-
             k_rate_boundary = setts.rate_bound / 5F * rate_and_detox_conv;
-
             k_rate_dead_axon = setts.rate_dead / 5F * rate_and_detox_conv;
-
             k_rate_extra = setts.rate_extra / 5F * rate_and_detox_conv;
-
             death_tox_lim = setts.death_tox_lim * rate_and_detox_conv;
 
             alg_prof.time(0);
@@ -124,8 +116,8 @@ namespace LHON_Form
 
             // ======== Image Properties Initialization =========
             int nerve_cent_pix = im_size / 2;
-            int nerve_r_pix = (int)(mdl.nerve_r * setts.resolution);
-            int vein_r_pix = (int)(mdl.vessel_rat * mdl.nerve_r * setts.resolution);
+            int nerve_r_pix = (int)(mdl_nerve_r * setts.resolution);
+            int vein_r_pix = (int)(mdl.vessel_ratio * mdl_nerve_r * setts.resolution);
             Func<int, int, int, int> within_circle2_int = (x, y, r) =>
             {
                 int dx = x - nerve_cent_pix;
@@ -140,8 +132,8 @@ namespace LHON_Form
             update_num_axons_lbl();
 
             // Assign max memory
-            int max_pixels_in_nerve = (int)(Math.Pow(mdl.nerve_r * setts.resolution, 2) * Math.PI) -
-                (int)(Math.Pow(mdl.nerve_r * mdl.vessel_rat * setts.resolution, 2) * Math.PI);
+            int max_pixels_in_nerve = (int)(Math.Pow(mdl_nerve_r * setts.resolution, 2) * Math.PI) -
+                (int)(Math.Pow(mdl_nerve_r * mdl.vessel_ratio * setts.resolution, 2) * Math.PI);
 
             // ======== Individual Axon Properties =========
 
@@ -166,14 +158,14 @@ namespace LHON_Form
 
             for (int i = 0; i < mdl.n_axons; i++)
             {
-                axon_is_large[i] = mdl.axon_coor[i][2] > mdl.max_r;
+                axon_is_large[i] = mdl.axon_coor[i][2] > axon_max_r_mean;
 
                 // Change coordinates from um to pixels
                 float xc = nerve_cent_pix + mdl.axon_coor[i][0] * setts.resolution;
                 float yc = nerve_cent_pix + mdl.axon_coor[i][1] * setts.resolution;
                 float rc = mdl.axon_coor[i][2] * setts.resolution;
 
-                if (rc > 10 * mdl.min_r_abs) axon_is_large[i] = true;
+                if (rc > 10 * axon_min_r) axon_is_large[i] = true;
 
                 axons_coor[i, 0] = xc; axons_coor[i, 1] = yc; axons_coor[i, 2] = rc;
 
@@ -213,7 +205,7 @@ namespace LHON_Form
                             axons_inside_pix_idx[i + 1]++;
 
                             occupied[x, y] = true;
-                            // tox[x, y] = 1F;
+                            tox[x, y] = 1F;
 
                             tox_prod[x, y] = k_tox_prod;
                             detox[x, y] = k_detox_intra;

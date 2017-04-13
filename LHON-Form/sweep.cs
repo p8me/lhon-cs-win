@@ -44,8 +44,6 @@ namespace LHON_Form
         {
             Repeat,
             Nerve_Rad,
-            Min_Rad,
-            Max_Rad,
             Clearance,
             Resolution,
             Tolerance,
@@ -197,13 +195,7 @@ namespace LHON_Form
             switch (selection)
             {
                 case param_select.Nerve_Rad:
-                    mdl.nerve_r = val;
-                    break;
-                case param_select.Min_Rad:
-                    mdl.min_r = val;
-                    break;
-                case param_select.Max_Rad:
-                    mdl.max_r = val;
+                    mdl.nerve_scale_ratio = val;
                     break;
                 case param_select.Clearance:
                     mdl.clearance = val;
@@ -212,12 +204,12 @@ namespace LHON_Form
                     setts.resolution = val;
                     break;
                 case param_select.Insult_Rad:
-                    init_insult[0] = mdl.nerve_r * (val * 2 - 1);
+                    init_insult[0] = mdl.nerve_scale_ratio * (val * 2 - 1);
                     init_insult[1] = 0;
                     break;
                 case param_select.Insult_Peri:
-                    init_insult[0] = -mdl.nerve_r * (float)Math.Cos(val * Math.PI / 180);
-                    init_insult[1] = -mdl.nerve_r * (float)Math.Sin(val * Math.PI / 180);
+                    init_insult[0] = -mdl.nerve_scale_ratio * (float)Math.Cos(val * Math.PI / 180);
+                    init_insult[1] = -mdl.nerve_scale_ratio * (float)Math.Sin(val * Math.PI / 180);
                     break;
             }
             return val;

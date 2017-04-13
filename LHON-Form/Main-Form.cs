@@ -33,11 +33,11 @@ namespace LHON_Form
 
         private void Main_Form_Load(object sender, EventArgs e)
         {
-            init_settings();
+            alg_worker.DoWork += (s, ev) => Run_Alg_GPU(); alg_worker.WorkerSupportsCancellation = true;
+            new_model_worker.DoWork += (s, ev) => new_model();
 
-            mdl.min_r_abs = 0.19F / 2;
-            mdl.max_r_abs = 6.87F / 2;
-
+            init_settings_gui();
+            
             if (init_gpu())
             {
                 MessageBox.Show("No Nvidia GPU detected! This program requires an Nvidia GPU.", "Fatal Error");
@@ -45,16 +45,16 @@ namespace LHON_Form
                 return;
             }
 
-            alg_worker.DoWork += (s, ev) => Run_Alg_GPU(); alg_worker.WorkerSupportsCancellation = true;
-            new_model_worker.DoWork += (s, ev) => new_model();
+            string[] fileEntries = Directory.GetFiles(ProjectOutputDir + @"Models\");
+            if (fileEntries.Length > 0) load_model(fileEntries[fileEntries.Length - 1]);
+
+            fileEntries = Directory.GetFiles(ProjectOutputDir + @"Settings\");
+            if (fileEntries.Length > 0) load_settings(fileEntries[fileEntries.Length - 1]);
 
             if (mdl.n_axons > 0 && mdl.n_axons < 100000 && setts.resolution > 0)
                 preprocess_model();
-
-            read_model_cdf_file();
         }
-
-
+        
         // =============================== MAIN LOOP
 
         bool en_prof = false;
@@ -75,8 +75,8 @@ namespace LHON_Form
 
                 tt_sim.restart();
 
-                last_itr = (uint)(mdl.nerve_r * Math.Pow(setts.resolution, 4) * 1.6F);
-                last_areal_prog = 1F - ((mdl.min_r + mdl.max_r) / mdl.nerve_r / 2) * ((mdl.min_r + mdl.max_r) / mdl.nerve_r / 2);
+                last_itr = (uint)(mdl_nerve_r * Math.Pow(setts.resolution, 4) * 1.6F);
+                last_areal_prog = 1F - ((axon_min_r_mean + axon_max_r_mean) / mdl_nerve_r / 2) * ((axon_min_r_mean + axon_max_r_mean) / mdl_nerve_r / 2);
                 tic();
             }
 
@@ -86,7 +86,7 @@ namespace LHON_Form
 
             alg_prof.time(0);
 
-            gui_iteration_period = (int)(50 * setts.resolution * mdl.min_r);
+            gui_iteration_period = (int)(50 * setts.resolution * axon_min_r_mean);
 
             tt_sim.start();
 
@@ -223,8 +223,8 @@ namespace LHON_Form
             if (sim_stat == sim_stat_enum.Running) return;
 
             // Sets the initial insult location
-            init_insult[0] = (float)x / setts.resolution - (mdl.nerve_r + nerve_clear);
-            init_insult[1] = (float)y / setts.resolution - (mdl.nerve_r + nerve_clear);
+            init_insult[0] = (float)x / setts.resolution - (mdl_nerve_r + nerve_clear);
+            init_insult[1] = (float)y / setts.resolution - (mdl_nerve_r + nerve_clear);
 
             reset_state();
         }
@@ -239,8 +239,8 @@ namespace LHON_Form
             {
                 // Identify first dying axon
                 int min_dis = 1000000000;
-                int iicx = (int)((init_insult[0] + mdl.nerve_r + nerve_clear) * setts.resolution);
-                int iicy = (int)((init_insult[1] + mdl.nerve_r + nerve_clear) * setts.resolution);
+                int iicx = (int)((init_insult[0] + mdl_nerve_r + nerve_clear) * setts.resolution);
+                int iicy = (int)((init_insult[1] + mdl_nerve_r + nerve_clear) * setts.resolution);
                 float min_first_r = float.Parse(txt_min_first_r.Text) * setts.resolution;
                 for (int i = 0; i < mdl.n_axons; i++)
                 {

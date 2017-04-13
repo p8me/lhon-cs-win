@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<Model xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <nerve_scale_ratio>0.05</nerve_scale_ratio>
+  <vessel_ratio>0.1</vessel_ratio>
+  <clearance>0.1</clearance>
+  <circ_gen_ratio>2</circ_gen_ratio>
+  <n_axons>0</n_axons>
+</Model>

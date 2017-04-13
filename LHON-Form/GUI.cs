@@ -181,8 +181,8 @@ namespace LHON_Form
             if (InvokeRequired)
                 Invoke(new Action(() => update_num_axons_lbl()));
             else
-                lbl_num_axons.Text = mdl.n_axons.ToString() + " (" +
-                    (Math.Pow((mdl.nerve_r / real_model_nerve_r), 2) * real_model_num_axons).ToString("0") + ")";
+                lbl_num_axons.Text = mdl.n_axons.ToString() + " Expected: " +
+                    (Math.Pow(mdl.nerve_scale_ratio, 2) * mdl_real_num_axons).ToString("0");
         }
 
         void update_mdl_prog(float prog)
@@ -272,22 +272,20 @@ namespace LHON_Form
 
         // =========================== Settings
 
-        void init_settings()
+        void init_settings_gui()
         {
-            txt_nerve_rad.TextChanged += (s, e) => mdl.nerve_r = read_float(s);
-            txt_vein_rad.TextChanged += (s, e) => mdl.vessel_rat = read_float(s);
-            txt_max_rad.TextChanged += (s, e) => mdl.max_r = read_float(s);
-            txt_min_rad.TextChanged += (s, e) => mdl.min_r = read_float(s);
+            txt_nerve_scale.TextChanged += (s, e) => mdl.nerve_scale_ratio = read_float(s)/100F;
+            txt_vein_rad.TextChanged += (s, e) => mdl.vessel_ratio = read_float(s)/100F;
             txt_clearance.TextChanged += (s, e) => mdl.clearance = read_float(s);
             txt_circ_gen_ratio.TextChanged += (s, e) => mdl.circ_gen_ratio = read_float(s);
 
             txt_resolution.TextChanged += (s, e) =>
             {
                 setts.resolution = read_float(s);
-                float temp = setts.resolution * (mdl.max_r + mdl.min_r) / 2;
+                float temp = setts.resolution * (axon_max_r_mean + axon_min_r_mean) / 2;
                 area_res_factor = Maxf(temp * temp * 2, 1F);
             };
-            
+
             txt_detox_extra.TextChanged += (s, e) => setts.detox_extra = read_float(s);
             txt_detox_intra.TextChanged += (s, e) => setts.detox_intra = read_float(s);
 
@@ -295,7 +293,7 @@ namespace LHON_Form
             txt_rate_dead.TextChanged += (s, e) => setts.rate_dead = read_float(s);
             txt_rate_extra.TextChanged += (s, e) => setts.rate_extra = read_float(s);
             txt_rate_live.TextChanged += (s, e) => setts.rate_live = read_float(s);
-            txt_prod_rate.TextChanged += (s, e) => setts.tox_prod = read_float(s);
+            txt_tox_prod_rate.TextChanged += (s, e) => setts.tox_prod = read_float(s);
             txt_death_tox_lim.TextChanged += (s, e) => setts.death_tox_lim = read_float(s);
 
             btn_save_model.Click += (s, e) =>
@@ -348,14 +346,6 @@ namespace LHON_Form
                 load_settings(FD.FileName);
             };
 
-            // =============== Init Value
-
-            string[] fileEntries = Directory.GetFiles(ProjectOutputDir + @"Models\");
-            if (fileEntries.Length > 0) load_model(fileEntries[fileEntries.Length - 1]);
-
-            fileEntries = Directory.GetFiles(ProjectOutputDir + @"Settings\");
-            if (fileEntries.Length > 0) load_settings(fileEntries[fileEntries.Length - 1]);
-
         }
 
         void load_model(string path)
@@ -374,8 +364,6 @@ namespace LHON_Form
             update_mdl_and_setts_ui();
 
             update_bottom_stat("Model Successfully Loaded.");
-
-            //preprocess_model();
         }
 
         void load_settings(string path)
@@ -395,10 +383,8 @@ namespace LHON_Form
 
         void update_mdl_and_setts_ui()
         {
-            txt_nerve_rad.Text = mdl.nerve_r.ToString();
-            txt_vein_rad.Text = mdl.vessel_rat.ToString();
-            txt_max_rad.Text = mdl.max_r.ToString();
-            txt_min_rad.Text = mdl.min_r.ToString();
+            txt_nerve_scale.Text = (mdl.nerve_scale_ratio * 100F).ToString();
+            txt_vein_rad.Text = (mdl.vessel_ratio * 100F).ToString();
             txt_clearance.Text = mdl.clearance.ToString();
             txt_circ_gen_ratio.Text = mdl.circ_gen_ratio.ToString();
 
@@ -411,7 +397,7 @@ namespace LHON_Form
             txt_rate_extra.Text = setts.rate_extra.ToString();
             txt_rate_live.Text = setts.rate_live.ToString();
 
-            txt_prod_rate.Text = setts.tox_prod.ToString();
+            txt_tox_prod_rate.Text = setts.tox_prod.ToString();
             txt_death_tox_lim.Text = setts.death_tox_lim.ToString();
         }
 
@@ -477,7 +463,7 @@ namespace LHON_Form
             }
             else
                 r = 255 - v;
-            
+
             pix_addr[0] = (byte)b;
             pix_addr[1] = (byte)g;
             pix_addr[2] = (byte)r;
@@ -496,7 +482,7 @@ namespace LHON_Form
                 fixed (byte* dat = &bmp_bytes[0, 0, 0])
                     CopyMemory(bmp_scan0, (IntPtr)dat, (uint)bmp_bytes.Length);
                 picB.Image = bmp;
-                
+
                 if (sim_stat == sim_stat_enum.Running && chk_rec_avi.Checked)
                 {
                     //aviStream.AddFrame((Bitmap)bmp.Clone());

@@ -28,10 +28,6 @@ namespace LHON_Form
     {
         const string ProjectOutputDir = @"..\..\Project_Output\";
         
-        // Used as measure of comparison
-        const float real_model_nerve_r = 750; // um
-        const int real_model_num_axons = 1200000;
-        
         int threads_per_block_1D = 8;
         
         int nerve_clear = 4; // clearance of nerve from image borders in unit length
@@ -97,17 +93,7 @@ namespace LHON_Form
 
         axon_lbl_class[] axon_lbl;
 
-        public class Model
-        {
-            public float nerve_r, vessel_rat, min_r, max_r,
-                min_r_abs,
-                max_r_abs,
-                clearance;
-            public float circ_gen_ratio;
-
-            public int n_axons;
-            public List<float[]> axon_coor;
-        }
+        
 
         public class Setts
         {

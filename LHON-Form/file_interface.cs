@@ -71,9 +71,7 @@ namespace LHON_Form
             {
                 using (BinaryWriter writer = new BinaryWriter(fileStream))
                 {
-                    writer.Write(mdl.nerve_r);
-                    writer.Write(mdl.max_r);
-                    writer.Write(mdl.min_r);
+                    writer.Write(mdl.nerve_scale_ratio);
                     writer.Write(mdl.clearance);
                     writer.Write(mdl.n_axons);
                     writer.Write(setts.resolution);
@@ -94,16 +92,16 @@ namespace LHON_Form
 
                     gpu.CopyFromDevice(death_itr_dev, death_itr);
 
-                    for (int m = 0; m < mdl.n_axons; m++)
-                    {
-                        float x = (mdl.axon_coor[m][0] / mdl.nerve_r / 2 + 0.5F) * 256F;
-                        writer.Write((byte)(x));
-                        float y = (mdl.axon_coor[m][1] / mdl.nerve_r / 2 + 0.5F) * 256F;
-                        writer.Write((byte)(y));
-                        writer.Write((byte)(mdl.axon_coor[m][2] * 40));
-                        float r = (float)death_itr[m] / (float)last_itr * 256F;
-                        writer.Write((byte)(r));
-                    }
+                    //for (int m = 0; m < mdl.n_axons; m++)
+                    //{
+                    //    float x = (mdl.axon_coor[m][0] / mdl.nerve_scale / 2 + 0.5F) * 256F;
+                    //    writer.Write((byte)(x));
+                    //    float y = (mdl.axon_coor[m][1] / mdl.nerve_scale / 2 + 0.5F) * 256F;
+                    //    writer.Write((byte)(y));
+                    //    writer.Write((byte)(mdl.axon_coor[m][2] * 40));
+                    //    float r = (float)death_itr[m] / (float)last_itr * 256F;
+                    //    writer.Write((byte)(r));
+                    //}
 
                     for (int m = 0; m < progress_num_frames; m++)
                         for (int i = 0; i < prog_im_siz; i++)
@@ -131,7 +129,7 @@ namespace LHON_Form
             string path = ProjectOutputDir + @"Exported\" + DateTime.Now.ToString("yyyy - MM - dd @HH - mm - ss") + ".txt";
             using (StreamWriter file = new StreamWriter(path, true))
             {
-                file.WriteLine("{0}, {1}, {2}", mdl.nerve_r, mdl.vessel_rat, mdl.clearance);
+                file.WriteLine("{0}, {1}, {2}", mdl.nerve_scale_ratio, mdl.vessel_ratio, mdl.clearance);
                 for (int i = 0; i < mdl.n_axons; i++)
                     file.WriteLine("{0}, {1}, {2}", mdl.axon_coor[i][0], mdl.axon_coor[i][1], mdl.axon_coor[i][2]);
             }

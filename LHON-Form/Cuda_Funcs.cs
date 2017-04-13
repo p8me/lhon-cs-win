@@ -64,17 +64,10 @@ namespace LHON_Form
         // ==================================================================
 
         [CudafyDummy]
-        public static void cuda_update_live(int im_size,
-            int n_neurs, float[,] tox, float[,] rate, float[,] detox, bool[] live_neur, int[] num_live_neur,
-            float[] tox_touch_neur, float[] neur_tol, int[,,] axons_bound_touch_pix, int[] axons_bound_touch_npix,
-            ushort[,] axons_inside_pix, int[] axons_inside_pix_idx, uint[,] locked_pix, int[] death_itr, int itr)
-        { }
-        
+        public static void cuda_update_live() { }
+
         [CudafyDummy]
-        public static void cuda_diffusion(int im_size,
-            float[,] tox, float[,,] rate,  float[,] detox, float[,] tox_prod)
-        { }
-        
+        public static void cuda_diffusion() { }
 
 
         // ======================================================================
@@ -143,37 +136,3 @@ namespace LHON_Form
     }
 }
 
-
-/*
- 
-    [Cudafy]
-        public static void gpu_check_neur_overlap(GThread thread, float[,] tox, int x0, int y0, int xc, int yc, int rc_clear2, int[] overlaps)
-        {
-            int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x + x0;
-            int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y + y0;
-
-            float dx = x - xc;
-            float dy = y - yc;
-            if (rc_clear2 - (dx * dx + dy * dy) > 0)
-                if (tox[x, y] > 0)
-                    thread.atomicAdd(ref overlaps[0], 1);
-        }
-
-
-    [Cudafy]
-        public static void gpu_check_neur_overlap_2(GThread thread, float[,] tox, int x0, int y0, int xc, int yc, int rc_clear2, int[] overlaps)
-        {
-            int x = thread.blockIdx.x * thread.blockDim.x + thread.threadIdx.x + x0;
-            int y = thread.blockIdx.y * thread.blockDim.y + thread.threadIdx.y + y0;
-
-            if (overlaps[0] == 0)
-            {
-                float dx = x - xc;
-                float dy = y - yc;
-                if (rc_clear2 - (dx * dx + dy * dy) > 0)
-                    tox[x, y] = 1;
-            }
-        }
-
-
- */

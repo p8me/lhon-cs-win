@@ -176,13 +176,13 @@ namespace LHON_Form
             else btn_start.Text = s;
         }
 
-        void update_n_neur_lbl()
+        void update_num_axons_lbl()
         {
             if (InvokeRequired)
-                Invoke(new Action(() => update_n_neur_lbl()));
+                Invoke(new Action(() => update_num_axons_lbl()));
             else
-                lbl_n_Neurs.Text = mdl.n_neurs.ToString() + " (" +
-                    (Math.Pow((mdl.nerve_r / real_model_nerve_r), 2) * real_model_num_neurs).ToString("0") + ")";
+                lbl_num_axons.Text = mdl.n_axons.ToString() + " (" +
+                    (Math.Pow((mdl.nerve_r / real_model_nerve_r), 2) * real_model_num_axons).ToString("0") + ")";
         }
 
         void update_mdl_prog(float prog)
@@ -218,6 +218,9 @@ namespace LHON_Form
 
         void append_stat_ln(string s) { append_stat(s + Environment.NewLine); }
 
+        uint prev_itr = 0;
+        float prev_itr_t = 0;
+
         void update_gui_labels()
         {
             Invoke(new Action(() =>
@@ -225,14 +228,22 @@ namespace LHON_Form
                 lbl_itr.Text = iteration.ToString("0");
                 lbl_tox.Text = (sum_tox / area_res_factor).ToString("0");
                 lbl_areal_progress.Text = (areal_progress * 100).ToString("0.0") + "%";
-                lbl_live_neur_perc.Text = ((float)num_live_neur[0] * 100 / mdl.n_neurs).ToString("0.0") + "%";
+                lbl_alive_axons_perc.Text = ((float)num_alive_axons[0] * 100 / mdl.n_axons).ToString("0.0") + "%";
                 var span = TimeSpan.FromSeconds(tt_sim.read() / 1000);
                 lbl_el_time.Text = string.Format("{0}:{1:00}:{2:00}", (int)span.TotalHours, span.Minutes, span.Seconds);
 
 
                 float itr_p_s = 0;
                 if (sim_stat == sim_stat_enum.Running)
-                    itr_p_s = iteration / tt_sim.read() * 1000;
+                {
+                    if (prev_itr == 0)
+                        itr_p_s = iteration / tt_sim.read() * 1000;
+                    else
+                        itr_p_s = (iteration - prev_itr) / (tt_sim.read() - prev_itr_t) * 1000;
+
+                    prev_itr_t = tt_sim.read();
+                    prev_itr = iteration;
+                }
 
                 string s = itr_p_s.ToString("0.0");
                 lbl_itr_s.Text = s;
@@ -250,19 +261,12 @@ namespace LHON_Form
                 }
             }));
 
-            //if (chk_neur_lvl.Checked)
-            //{
-            //    for (int i = 0; i < mdl.n_neurs; i++)
-            //        if (show_neur_lvl[i] && live_neur[i] && tox_touch_neur[i] > 1)
-            //        {
-            //            if (Math.Abs(tox_touch_neur_last[i] - tox_touch_neur[i]) > 0.01)
-            //            {
-            //                neur_lbl[i].lbl = (tox_touch_neur[i] / neur_tol[i] * 100).ToString("0");
-            //                tox_touch_neur_last[i] = tox_touch_neur[i];
-            //            }
-            //        }
-            //        else if (i != first_neur_idx) neur_lbl[i].lbl = "";
-            //}
+            if (chk_axons_tox_lvl.Checked)
+            {
+                for (int i = 0; i < mdl.n_axons; i++)
+                    if (axon_is_large[i] && !axon_is_alive[i])
+                        axon_lbl[i].lbl = "X";
+            }
 
         }
 
@@ -271,7 +275,7 @@ namespace LHON_Form
         void init_settings()
         {
             txt_nerve_rad.TextChanged += (s, e) => mdl.nerve_r = read_float(s);
-            txt_vein_rad.TextChanged += (s, e) => mdl.vein_rat = read_float(s);
+            txt_vein_rad.TextChanged += (s, e) => mdl.vessel_rat = read_float(s);
             txt_max_rad.TextChanged += (s, e) => mdl.max_r = read_float(s);
             txt_min_rad.TextChanged += (s, e) => mdl.min_r = read_float(s);
             txt_clearance.TextChanged += (s, e) => mdl.clearance = read_float(s);
@@ -291,9 +295,8 @@ namespace LHON_Form
             txt_rate_dead.TextChanged += (s, e) => setts.rate_dead = read_float(s);
             txt_rate_extra.TextChanged += (s, e) => setts.rate_extra = read_float(s);
             txt_rate_live.TextChanged += (s, e) => setts.rate_live = read_float(s);
-
             txt_prod_rate.TextChanged += (s, e) => setts.tox_prod = read_float(s);
-            
+            txt_death_tox_lim.TextChanged += (s, e) => setts.death_tox_lim = read_float(s);
 
             btn_save_model.Click += (s, e) =>
             {
@@ -393,7 +396,7 @@ namespace LHON_Form
         void update_mdl_and_setts_ui()
         {
             txt_nerve_rad.Text = mdl.nerve_r.ToString();
-            txt_vein_rad.Text = mdl.vein_rat.ToString();
+            txt_vein_rad.Text = mdl.vessel_rat.ToString();
             txt_max_rad.Text = mdl.max_r.ToString();
             txt_min_rad.Text = mdl.min_r.ToString();
             txt_clearance.Text = mdl.clearance.ToString();
@@ -409,7 +412,7 @@ namespace LHON_Form
             txt_rate_live.Text = setts.rate_live.ToString();
 
             txt_prod_rate.Text = setts.tox_prod.ToString();
-
+            txt_death_tox_lim.Text = setts.death_tox_lim.ToString();
         }
 
         float read_float(object o)
@@ -474,8 +477,7 @@ namespace LHON_Form
             }
             else
                 r = 255 - v;
-
-
+            
             pix_addr[0] = (byte)b;
             pix_addr[1] = (byte)g;
             pix_addr[2] = (byte)r;
@@ -494,7 +496,7 @@ namespace LHON_Form
                 fixed (byte* dat = &bmp_bytes[0, 0, 0])
                     CopyMemory(bmp_scan0, (IntPtr)dat, (uint)bmp_bytes.Length);
                 picB.Image = bmp;
-
+                
                 if (sim_stat == sim_stat_enum.Running && chk_rec_avi.Checked)
                 {
                     //aviStream.AddFrame((Bitmap)bmp.Clone());
@@ -530,37 +532,36 @@ namespace LHON_Form
                 picB_offx = (int)((picW - picB_ratio * (float)im_size) / 2f);
                 picB_offy = 0;
             }
-
         }
 
         private void picB_Paint(object sender, PaintEventArgs e)
         {
 
-            if (!show_neur_order_mdl_gen && neur_lbl != null)
+            if (!show_axon_order_mdl_gen && axon_lbl != null)
             {
-                // the X on the first neuron
-                var nlbl0 = neur_lbl[first_neur_idx];
-                SizeF textSize0 = e.Graphics.MeasureString(nlbl0.lbl, this.Font);
-                e.Graphics.DrawString(nlbl0.lbl, this.Font, Brushes.Beige, nlbl0.x * picB_ratio + picB_offx - (textSize0.Width / 2), nlbl0.y * picB_ratio + picB_offy - (textSize0.Height / 2));
+                // the X on the first axon
+                //var nlbl0 = axon_lbl[first_axon_idx];
+                //SizeF textSize0 = e.Graphics.MeasureString(nlbl0.lbl, this.Font);
+                //e.Graphics.DrawString(nlbl0.lbl, this.Font, Brushes.Beige, nlbl0.x * picB_ratio + picB_offx - (textSize0.Width / 2), nlbl0.y * picB_ratio + picB_offy - (textSize0.Height / 2));
 
-                if (chk_neur_lvl.Checked)
-                    for (int i = 0; i < mdl.n_neurs; i++)
+                if (chk_axons_tox_lvl.Checked)
+                    for (int i = 0; i < mdl.n_axons; i++)
                     {
-                        var nlbl = neur_lbl[i];
-                        if (show_neur_lvl[i] && i != first_neur_idx && nlbl.lbl.Length > 0)
+                        var nlbl = axon_lbl[i];
+                        if (axon_is_large[i] && i != first_axon_idx && nlbl.lbl.Length > 0)
                         {
                             SizeF textSize = e.Graphics.MeasureString(nlbl.lbl, this.Font);
-                            e.Graphics.DrawString(nlbl.lbl, this.Font, Brushes.White, nlbl.x * picB_ratio + picB_offx - (textSize.Width / 2), nlbl.y * picB_ratio + picB_offy - (textSize.Height / 2));
+                            e.Graphics.DrawString(nlbl.lbl, this.Font, Brushes.Red, nlbl.x * picB_ratio + picB_offx - (textSize.Width / 2), nlbl.y * picB_ratio + picB_offy - (textSize.Height / 2));
                         }
                     }
             }
 
-            if (show_neur_order_mdl_gen)
+            if (show_axon_order_mdl_gen)
             {
-                if (mdl_neur_lbl != null && mdl_neur_lbl.Length > 0)
-                    for (int i = 0; i < mdl_n_neurs; i++)
+                if (mdl_axon_lbl != null && mdl_axon_lbl.Length > 0)
+                    for (int i = 0; i < mdl_n_axons; i++)
                     {
-                        var lbli = mdl_neur_lbl[i];
+                        var lbli = mdl_axon_lbl[i];
                         if (lbli != null)
                         {
                             SizeF textSize = e.Graphics.MeasureString(lbli.lbl, this.Font);

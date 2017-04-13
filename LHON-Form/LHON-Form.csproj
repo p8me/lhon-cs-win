@@ -102,6 +102,7 @@
     <Compile Include="GUI.cs" />
     <Compile Include="model_gen.cs" />
     <Compile Include="preprocess.cs" />
+    <Compile Include="progression.cs" />
     <Compile Include="sweep.cs" />
     <Compile Include="Vars.cs" />
     <Compile Include="Main-Form.cs" />

@@ -49,7 +49,7 @@ namespace LHON_Form
             Clearance,
             Resolution,
             Tolerance,
-            Neur_Rate,
+            Axon_Rate,
             Insult_Rad,
             Insult_Peri
         };

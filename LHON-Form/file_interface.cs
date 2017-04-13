@@ -75,7 +75,7 @@ namespace LHON_Form
                     writer.Write(mdl.max_r);
                     writer.Write(mdl.min_r);
                     writer.Write(mdl.clearance);
-                    writer.Write(mdl.n_neurs);
+                    writer.Write(mdl.n_axons);
                     writer.Write(setts.resolution);
                     writer.Write(im_size);
                     writer.Write(prog_im_siz);
@@ -94,13 +94,13 @@ namespace LHON_Form
 
                     gpu.CopyFromDevice(death_itr_dev, death_itr);
 
-                    for (int m = 0; m < mdl.n_neurs; m++)
+                    for (int m = 0; m < mdl.n_axons; m++)
                     {
-                        float x = (mdl.neur_cor[m][0] / mdl.nerve_r / 2 + 0.5F) * 256F;
+                        float x = (mdl.axon_coor[m][0] / mdl.nerve_r / 2 + 0.5F) * 256F;
                         writer.Write((byte)(x));
-                        float y = (mdl.neur_cor[m][1] / mdl.nerve_r / 2 + 0.5F) * 256F;
+                        float y = (mdl.axon_coor[m][1] / mdl.nerve_r / 2 + 0.5F) * 256F;
                         writer.Write((byte)(y));
-                        writer.Write((byte)(mdl.neur_cor[m][2] * 40));
+                        writer.Write((byte)(mdl.axon_coor[m][2] * 40));
                         float r = (float)death_itr[m] / (float)last_itr * 256F;
                         writer.Write((byte)(r));
                     }
@@ -131,9 +131,9 @@ namespace LHON_Form
             string path = ProjectOutputDir + @"Exported\" + DateTime.Now.ToString("yyyy - MM - dd @HH - mm - ss") + ".txt";
             using (StreamWriter file = new StreamWriter(path, true))
             {
-                file.WriteLine("{0}, {1}, {2}", mdl.nerve_r, mdl.vein_rat, mdl.clearance);
-                for (int i = 0; i < mdl.n_neurs; i++)
-                    file.WriteLine("{0}, {1}, {2}", mdl.neur_cor[i][0], mdl.neur_cor[i][1], mdl.neur_cor[i][2]);
+                file.WriteLine("{0}, {1}, {2}", mdl.nerve_r, mdl.vessel_rat, mdl.clearance);
+                for (int i = 0; i < mdl.n_axons; i++)
+                    file.WriteLine("{0}, {1}, {2}", mdl.axon_coor[i][0], mdl.axon_coor[i][1], mdl.axon_coor[i][2]);
             }
             append_stat_ln("Model exported to " + path);
         }

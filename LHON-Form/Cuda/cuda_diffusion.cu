@@ -12,7 +12,7 @@ extern "C" __global__  void cuda_diffusion(unsigned int im_size, float* tox, flo
 	int x_y4 = 4 * x_y;
 
 	float t = tox[x_y];
-
+	
 	tox[x_y] +=
 		(tox[x_y_1] - t) * rate[x_y4] +
 		(tox[x_y_2] - t) * rate[x_y4 + 1] +
@@ -22,7 +22,7 @@ extern "C" __global__  void cuda_diffusion(unsigned int im_size, float* tox, flo
 	tox[x_y] += tox_prod[x_y];
 
 	tox[x_y] *= detox[x_y];
-
+	
 	// 12 float operations
 	// 14 int operations (including indices)
 	// 10 array addressing

@@ -30,7 +30,7 @@ namespace LHON_Form
         
         // Used as measure of comparison
         const float real_model_nerve_r = 750; // um
-        const int real_model_num_neurs = 1200000;
+        const int real_model_num_axons = 1200000;
         
         int threads_per_block_1D = 8;
         
@@ -45,7 +45,7 @@ namespace LHON_Form
         string avi_file;
         VideoStream aviStream;
 
-        int first_neur_idx = 0;
+        int first_axon_idx = 0;
         
         Bitmap bmp;
         ushort im_size;
@@ -88,24 +88,25 @@ namespace LHON_Form
         enum sim_stat_enum { None, Running, Paused, Successful, Failed };
         sim_stat_enum sim_stat = sim_stat_enum.None;
         
-        private class neur_lbl_class
+        private class axon_lbl_class
         {
             public string lbl;
             public float x;
             public float y;
         }
 
-        neur_lbl_class[] neur_lbl;
+        axon_lbl_class[] axon_lbl;
 
         public class Model
         {
-            public float nerve_r, vein_rat, min_r, max_r,
+            public float nerve_r, vessel_rat, min_r, max_r,
                 min_r_abs,
                 max_r_abs,
                 clearance;
-            public int n_neurs;
             public float circ_gen_ratio;
-            public List<float[]> neur_cor;
+
+            public int n_axons;
+            public List<float[]> axon_coor;
         }
 
         public class Setts
@@ -120,6 +121,8 @@ namespace LHON_Form
             public float tox_prod;
             public float detox_intra;
             public float detox_extra;
+
+            public float death_tox_lim;
         }
 
         Model mdl = new Model();

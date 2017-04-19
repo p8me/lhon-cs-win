@@ -1,11 +1,11 @@
 
 extern "C" __global__  void cuda_update_live(int n_axons, float* tox, float* rate, float* detox, float* tox_prod, float k_rate_dead_axon, float k_detox_extra, float death_tox_lim,
-	unsigned int * axons_cent_pix, unsigned int* axons_inside_pix, int* axons_inside_pix_idx, bool* axon_is_alive, int* num_alive_axons, int* death_itr, int iteration)
+	unsigned int * axons_cent_pix, unsigned int* axons_inside_pix, unsigned int* axons_inside_pix_idx, unsigned int* axon_surr_rate, unsigned int* axon_surr_rate_idx,
+	bool* axon_is_alive, unsigned char* axon_mask, int* num_alive_axons, int* death_itr, int iteration)
 {
-	int t_id = threadIdx.x + blockIdx.x * blockDim.x;
-	int stride = blockDim.x * gridDim.x;
+	int n = threadIdx.x + blockIdx.x * blockDim.x;
 
-	for (int n = t_id; n < n_axons; n += stride)
+	if (n < n_axons)
 	{
 		if (axon_is_alive[n] && tox[axons_cent_pix[n]] > death_tox_lim)
 		{ 	// Kill the axon
@@ -20,7 +20,11 @@ extern "C" __global__  void cuda_update_live(int n_axons, float* tox, float* rat
 
 				detox[idx] = k_detox_extra;
 				tox_prod[idx] = 0;
+				axon_mask[idx] = 2; // dead
 			}
+
+			for (int p = axon_surr_rate_idx[n]; p < axon_surr_rate_idx[n + 1]; p++)
+				rate[axon_surr_rate[p]] = k_rate_dead_axon;
 
 			axon_is_alive[n] = false;
 			death_itr[n] = iteration;

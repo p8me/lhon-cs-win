@@ -28,6 +28,8 @@ namespace LHON_Form
     {
         GifBitmapEncoder gifEnc = new GifBitmapEncoder();
 
+        bool _mousePressed;
+
         public Main_Form()
         {
             InitializeComponent();
@@ -37,9 +39,9 @@ namespace LHON_Form
             chk_show_bound.CheckedChanged += (o, e) => update_show_opts();
             chk_show_tox.CheckedChanged += (o, e) => update_show_opts();
 
-            txt_stop_itr.TextChanged += (s, e) => stop_iteration = read_int(s);
+            txt_stop_itr.TextChanged += (s, e) => stop_at_iteration = read_int(s);
 
-            txt_block_siz.TextChanged += (s, e) => threads_per_block_1D = read_int(s);
+            txt_block_siz.TextChanged += (s, e) => threads_per_block_1D = (ushort)read_int(s);
 
             btn_reset.Click += (s, e) =>
             {
@@ -121,6 +123,18 @@ namespace LHON_Form
             };
 
             txt_block_siz.Text = threads_per_block_1D.ToString("0");
+
+
+            //picB.MouseDown += (s, e) => _mousePressed = true;
+            //picB.MouseUp += (s, e) => _mousePressed = false;
+            //picB.MouseMove += (s, e) =>
+            //{
+            //    if (_mousePressed)
+            //    {
+            //        // Debug.WriteLine("dragging");
+            //    }
+            //};
+
         }
 
         void update_show_opts()
@@ -129,11 +143,11 @@ namespace LHON_Form
             show_opts[1] = chk_show_tox.Checked;
 
             gpu.CopyToDevice(show_opts, show_opts_dev);
-            update_bmp_from_tox(false);
+            update_bmp_image();
         }
-
-        // ========================================= Start / Stop
-
+        // ====================================================================
+        //                       Start / Stop Simulation
+        // ====================================================================
         void start_sim()
         {
             if (rate == null)
@@ -161,8 +175,9 @@ namespace LHON_Form
                 update_bottom_stat("Simulation is " + sim_stat.ToString());
             }
         }
-
-        // =========================== Low level GUI
+        // ====================================================================
+        //                           Low level GUI
+        // ====================================================================
 
         private void Main_Form_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -267,15 +282,16 @@ namespace LHON_Form
                     if (axon_is_large[i] && !axon_is_alive[i])
                         axon_lbl[i].lbl = "X";
             }
-
         }
 
-        // =========================== Settings
+        // ====================================================================
+        //                               Settings
+        // ====================================================================
 
         void init_settings_gui()
         {
-            txt_nerve_scale.TextChanged += (s, e) => mdl.nerve_scale_ratio = read_float(s)/100F;
-            txt_vein_rad.TextChanged += (s, e) => mdl.vessel_ratio = read_float(s)/100F;
+            txt_nerve_scale.TextChanged += (s, e) => mdl.nerve_scale_ratio = read_float(s) / 100F;
+            txt_vein_rad.TextChanged += (s, e) => mdl.vessel_ratio = read_float(s) / 100F;
             txt_clearance.TextChanged += (s, e) => mdl.clearance = read_float(s);
             txt_circ_gen_ratio.TextChanged += (s, e) => mdl.circ_gen_ratio = read_float(s);
 
@@ -405,13 +421,7 @@ namespace LHON_Form
         {
             TextBox txtB = (TextBox)o;
             float num;
-            if (!float.TryParse(txtB.Text, out num))
-            {
-                //txtB.Text = "0";
-                //txtB.SelectionStart = 0;
-                //txtB.SelectionLength = txtB.Text.Length;
-                return 0;
-            }
+            if (!float.TryParse(txtB.Text, out num)) return 0;
             return num;
         }
 
@@ -428,160 +438,7 @@ namespace LHON_Form
             }
             return num;
         }
-
-        // =========================== BMP Management
-        unsafe private void update_bmp_from_tox(bool reload_tox_dev)
-        {
-            if (reload_tox_dev)
-            {
-                gpu.CopyToDevice(tox, tox_dev);
-                gpu.Launch(blocks_per_grid, threads_per_block).gpu_fill_bmp(tox_dev, bmp_dev, show_opts_dev);
-                gpu.CopyFromDevice(bmp_dev, bmp_bytes);
-            }
-
-            else
-                for (int y = 0; y < im_size; y++)
-                    for (int x = 0; x < im_size; x++)
-                        fixed (byte* pix_addr = &bmp_bytes[y, x, 0])
-                            update_bmp_pix(tox[x, y], pix_addr, show_opts);
-
-            update_bmp_from_bmp_bytes_and_rec();
-        }
-
-        [Cudafy]
-        unsafe public static bool update_bmp_pix(float tx, byte* pix_addr, bool[] opts)
-        {
-            int r = 0, g = 0, b = 0;
-            int v = (int)(tx * 255);
-
-            if (opts[1])
-            {
-                if (v < 64) { r = 0; g = 4 * v; b = 255; }
-                else if (v < 128) { r = 0; b = 255 + 4 * (64 - v); g = 255; }
-                else if (v < 192) { r = 4 * (v - 128); b = 0; g = 255; }
-                else { g = 255 + 4 * (192 - v); b = 0; r = 255; }
-            }
-            else
-                r = 255 - v;
-
-            pix_addr[0] = (byte)b;
-            pix_addr[1] = (byte)g;
-            pix_addr[2] = (byte)r;
-            return false; // must return something!
-        }
-
-        [DllImport("kernel32.dll", EntryPoint = "CopyMemory", SetLastError = false)]
-        public static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);
-
-        unsafe void update_bmp_from_bmp_bytes_and_rec()
-        {
-            if (InvokeRequired)
-                Invoke(new Action(() => update_bmp_from_bmp_bytes_and_rec()));
-            else
-            {
-                fixed (byte* dat = &bmp_bytes[0, 0, 0])
-                    CopyMemory(bmp_scan0, (IntPtr)dat, (uint)bmp_bytes.Length);
-                picB.Image = bmp;
-
-                if (sim_stat == sim_stat_enum.Running && chk_rec_avi.Checked)
-                {
-                    //aviStream.AddFrame((Bitmap)bmp.Clone());
-
-                    var bmh = bmp.GetHbitmap();
-                    var opts = BitmapSizeOptions.FromWidthAndHeight(200, 200);
-                    var src = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(bmh, IntPtr.Zero, System.Windows.Int32Rect.Empty, opts);
-                    gifEnc.Frames.Add(BitmapFrame.Create(src));
-                }
-            }
-        }
-
-        int picB_offx, picB_offy;
-        float picB_ratio;
-
-        private void picB_Resize(object sender, EventArgs e)
-        {
-            float picW = picB.Size.Width;
-            float picH = picB.Size.Height;
-
-            float asp_im = (float)im_size / (float)im_size,
-                asp_box = picW / picH;
-
-            if (asp_im > asp_box)
-            {
-                picB_ratio = picW / im_size;
-                picB_offx = 0;
-                picB_offy = (int)((picH - picB_ratio * (float)im_size) / 2f);
-            }
-            else
-            {
-                picB_ratio = picH / im_size;
-                picB_offx = (int)((picW - picB_ratio * (float)im_size) / 2f);
-                picB_offy = 0;
-            }
-        }
-
-        private void picB_Paint(object sender, PaintEventArgs e)
-        {
-
-            if (!show_axon_order_mdl_gen && axon_lbl != null)
-            {
-                // the X on the first axon
-                //var nlbl0 = axon_lbl[first_axon_idx];
-                //SizeF textSize0 = e.Graphics.MeasureString(nlbl0.lbl, this.Font);
-                //e.Graphics.DrawString(nlbl0.lbl, this.Font, Brushes.Beige, nlbl0.x * picB_ratio + picB_offx - (textSize0.Width / 2), nlbl0.y * picB_ratio + picB_offy - (textSize0.Height / 2));
-
-                if (chk_axons_tox_lvl.Checked)
-                    for (int i = 0; i < mdl.n_axons; i++)
-                    {
-                        var nlbl = axon_lbl[i];
-                        if (axon_is_large[i] && i != first_axon_idx && nlbl.lbl.Length > 0)
-                        {
-                            SizeF textSize = e.Graphics.MeasureString(nlbl.lbl, this.Font);
-                            e.Graphics.DrawString(nlbl.lbl, this.Font, Brushes.Red, nlbl.x * picB_ratio + picB_offx - (textSize.Width / 2), nlbl.y * picB_ratio + picB_offy - (textSize.Height / 2));
-                        }
-                    }
-            }
-
-            if (show_axon_order_mdl_gen)
-            {
-                if (mdl_axon_lbl != null && mdl_axon_lbl.Length > 0)
-                    for (int i = 0; i < mdl_n_axons; i++)
-                    {
-                        var lbli = mdl_axon_lbl[i];
-                        if (lbli != null)
-                        {
-                            SizeF textSize = e.Graphics.MeasureString(lbli.lbl, this.Font);
-                            float x = lbli.x * picB_ratio + picB_offx - (textSize.Width / 2);
-                            float y = lbli.y * picB_ratio + picB_offy - (textSize.Height / 2);
-                            e.Graphics.DrawString(lbli.lbl, this.Font, Brushes.White, x, y);
-                        }
-                    }
-            }
-        }
-
-        private void picB_Click(object sender, EventArgs e)
-        {
-            var mouseEventArgs = e as MouseEventArgs;
-            if (mouseEventArgs != null)
-            {
-                int x = (int)((mouseEventArgs.X - picB_offx) / picB_ratio);
-                int y = (int)((mouseEventArgs.Y - picB_offy) / picB_ratio);
-                if (x >= 0 && x < im_size && y >= 0 && y < im_size)
-                    mouse_click(x, y); //Debug.WriteLine("X= " + x + " Y= " + y);
-            }
-        }
-
-
-        // ================ Mouse Drawing =======================
-
-        bool _mousePressed = false;
-        private void picB_MouseDown(object sender, MouseEventArgs e) { _mousePressed = true; }
-        private void picB_MouseUp(object sender, MouseEventArgs e) { _mousePressed = false; }
-        private void picB_MouseMove(object sender, MouseEventArgs e)
-        {
-            if (_mousePressed) { } // Debug.WriteLine("dragging");
-        }
-
+        
     }
 }
 

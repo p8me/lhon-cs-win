@@ -330,12 +330,12 @@ namespace LHON_Form
                 mdl.axon_coor.Add(mdl_axons_coor[i]);
                 mdl.n_axons++;
 
-                int tmp_im_siz = im_size = calc_im_siz();
+                int mdl_gen_im_siz = im_size = calc_im_siz();
 
                 if (show_axon_order_mdl_gen)
                 {
-                    float tempx = mdl_axons_coor[i][0] * setts.resolution + tmp_im_siz / 2;
-                    float tempy = mdl_axons_coor[i][1] * setts.resolution + tmp_im_siz / 2;
+                    float tempx = mdl_axons_coor[i][0] * setts.resolution + mdl_gen_im_siz / 2;
+                    float tempy = mdl_axons_coor[i][1] * setts.resolution + mdl_gen_im_siz / 2;
                     mdl_axon_lbl[idx] = new axon_lbl_class { lbl = (i + 1).ToString("0"), x = tempx, y = tempy };
                     idx++;
                 }

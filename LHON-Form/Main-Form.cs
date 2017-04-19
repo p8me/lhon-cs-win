@@ -37,7 +37,7 @@ namespace LHON_Form
             new_model_worker.DoWork += (s, ev) => new_model();
 
             init_settings_gui();
-            
+
             if (init_gpu())
             {
                 MessageBox.Show("No Nvidia GPU detected! This program requires an Nvidia GPU.", "Fatal Error");
@@ -54,7 +54,7 @@ namespace LHON_Form
             if (mdl.n_axons > 0 && mdl.n_axons < 100000 && setts.resolution > 0)
                 preprocess_model();
         }
-        
+
         // =============================== MAIN LOOP
 
         bool en_prof = false;
@@ -81,12 +81,10 @@ namespace LHON_Form
             }
 
             gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId); // should be reloaded for reliability
-
-            float[,] diff = new float[im_size, im_size];
-
+            
             alg_prof.time(0);
 
-            gui_iteration_period = (int)(50 * setts.resolution * axon_min_r_mean);
+            gui_iteration_period = 10; // Max(10, (int)pow2f(im_size));
 
             tt_sim.start();
 
@@ -96,139 +94,47 @@ namespace LHON_Form
 
                 bool update_gui = iteration % gui_iteration_period == 0;
 
-                alg_prof.time(-1);
+                alg_prof.time(-1); 
 
-                //if ((iteration % (int)area_res_factor) == 0)
-
-                gpu.Launch(mdl.n_axons / 16, 16).cuda_update_live(mdl.n_axons, tox_dev, rate_dev, detox_dev, tox_prod_dev, k_rate_dead_axon, k_detox_extra, death_tox_lim,
-                    axons_cent_pix_dev, axons_inside_pix_dev, axons_inside_pix_idx_dev, axon_is_alive_dev, num_alive_axons_dev, death_itr_dev, iteration);
+                gpu.Launch(blocks_per_grid_1D_axons, threads_per_block_1D).cuda_update_live(mdl.n_axons, tox_dev, rate_dev, detox_dev, tox_prod_dev, k_rate_dead_axon, k_detox_extra, death_tox_lim,
+                    axons_cent_pix_dev, axons_inside_pix_dev, axons_inside_pix_idx_dev, axon_surr_rate_dev, axon_surr_rate_idx_dev,
+                    axon_is_alive_dev, axon_mask_dev, num_alive_axons_dev, death_itr_dev, iteration);
                 if (en_prof) { gpu.Synchronize(); alg_prof.time(1); }
-
-
-                gpu.Launch(blocks_per_grid, threads_per_block).cuda_diffusion(im_size, tox_dev, rate_dev, detox_dev, tox_prod_dev);
+                
+                gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_diffusion(pix_idx_dev, pix_idx_num, im_size,
+                    tox_dev, rate_dev, detox_dev, tox_prod_dev);
+                
                 if (en_prof) { gpu.Synchronize(); alg_prof.time(2); }
 
                 if (update_gui)
                 {
                     gpu.CopyFromDevice(axon_is_alive_dev, axon_is_alive);
 
-                    // Calc tox_sum
-                    //gpu.Set(sum_tox_dev);
-                    //gpu.Launch(blocks_per_grid, threads_per_block).gpu_sum_tox(tox_dev, sum_tox_dev);
-                    //gpu.CopyFromDevice(sum_tox_dev, out sum_tox);
+                    // Calc tox_sum for sanity check
+                    gpu.Set(sum_tox_dev);
+                    gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_tox_sum(pix_idx_dev, pix_idx_num, tox_dev, sum_tox_dev);
+                    gpu.CopyFromDevice(sum_tox_dev, out sum_tox);
 
                     update_gui_labels();
 
                     if (en_prof) { gpu.Synchronize(); alg_prof.time(3); }
 
-                    gpu.Launch(blocks_per_grid, threads_per_block).gpu_fill_bmp(tox_dev, bmp_dev, show_opts_dev);
-                    gpu.CopyFromDevice(bmp_dev, bmp_bytes);
+                    update_bmp_image();
 
-                    gpu.CopyFromDevice(tox_dev, tox);
-
-                    update_bmp_from_bmp_bytes_and_rec();
                     if (en_prof) alg_prof.time(4);
-
                 }
 
                 if (sim_stat != sim_stat_enum.Running) break;
-                if (iteration == stop_iteration) stop_sim(sim_stat_enum.Paused);
+                if (iteration == stop_at_iteration) stop_sim(sim_stat_enum.Paused);
             }
 
             tt_sim.pause();
 
             if (en_prof) alg_prof.report();
             else Debug.WriteLine("Sim took " + (toc() / 1000).ToString("0.000") + " secs\n");
-
         }
 
-        // ============= Copy from GPU to CPU and vice-versa ==================
-
-        private void load_gpu_from_cpu()
-        {
-            GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
-
-            gpu.FreeAll();
-
-            gpu.Synchronize();
-
-            tox_dev = gpu.Allocate(tox); gpu.CopyToDevice(tox, tox_dev);
-            rate_dev = gpu.Allocate(rate); gpu.CopyToDevice(rate, rate_dev);
-            detox_dev = gpu.Allocate(detox); gpu.CopyToDevice(detox, detox_dev);
-            tox_prod_dev = gpu.Allocate(tox_prod); gpu.CopyToDevice(tox_prod, tox_prod_dev);
-
-            axons_cent_pix_dev = gpu.Allocate(axons_cent_pix); gpu.CopyToDevice(axons_cent_pix, axons_cent_pix_dev);
-            axon_is_alive_dev = gpu.Allocate(axon_is_alive); gpu.CopyToDevice(axon_is_alive, axon_is_alive_dev);
-
-            pix_idx_dev = gpu.Allocate(pix_idx); gpu.CopyToDevice(pix_idx, pix_idx_dev);
-
-            num_alive_axons_dev = gpu.Allocate<int>(1); gpu.CopyToDevice(num_alive_axons, num_alive_axons_dev);
-            death_itr_dev = gpu.Allocate(death_itr); gpu.CopyToDevice(death_itr, death_itr_dev);
-            bmp_dev = gpu.Allocate(bmp_bytes); gpu.CopyToDevice(bmp_bytes, bmp_dev);
-
-            sum_tox_dev = gpu.Allocate<float>(1);
-            progress_dev = gpu.Allocate<float>(3);
-
-            progression_image_sum_float_dev = gpu.Allocate<float>(prog_im_siz, prog_im_siz);
-            progress_image_num_averaged_pix_dev = gpu.Allocate<uint>(prog_im_siz, prog_im_siz);
-            progression_image_dev = gpu.Allocate<byte>(prog_im_siz, prog_im_siz);
-
-            // ==================== Constants
-
-            blocks_per_grid = new dim3((im_size) / threads_per_block_1D, (im_size) / threads_per_block_1D);
-            threads_per_block = new dim3(threads_per_block_1D, threads_per_block_1D);
-            show_opts_dev = gpu.Allocate(show_opts); gpu.CopyToDevice(show_opts, show_opts_dev);
-
-
-            axons_inside_pix_dev = gpu.Allocate(axons_inside_pix); gpu.CopyToDevice(axons_inside_pix, axons_inside_pix_dev);
-            axons_inside_pix_idx_dev = gpu.Allocate(axons_inside_pix_idx); gpu.CopyToDevice(axons_inside_pix_idx, axons_inside_pix_idx_dev);
-
-            gpu.Synchronize();
-
-            Debug.WriteLine("GPU used memory: " + (100.0 * (1 - (double)gpu.FreeMemory / (double)gpu.TotalMemory)).ToString("0.0") + " %\n");
-        }
-
-        private void load_cpu_from_gpu()
-        {
-            //GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
-
-            gpu.CopyFromDevice(tox_dev, tox);
-            gpu.CopyFromDevice(rate_dev, rate);
-            gpu.CopyFromDevice(detox_dev, detox);
-            gpu.CopyFromDevice(tox_prod_dev, tox_prod);
-
-            gpu.CopyFromDevice(axon_is_alive_dev, axon_is_alive);
-            gpu.CopyFromDevice(death_itr_dev, death_itr);
-        }
-
-        // ================== Helpers  =======================
-
-        void init_bmp_write()
-        {
-            bmp = new Bitmap(im_size, im_size);
-            Rectangle rect = new Rectangle(0, 0, im_size, im_size);
-            BitmapData bmpData = bmp.LockBits(rect, ImageLockMode.ReadWrite, bmp.PixelFormat);
-            bmp_scan0 = bmpData.Scan0;
-            bmp.UnlockBits(bmpData);
-            bmp_bytes = new byte[im_size, im_size, 4];
-
-            for (int y = 0; y < im_size; y++)
-                for (int x = 0; x < im_size; x++)
-                    bmp_bytes[y, x, 3] = 255;
-            tox = new float[im_size, im_size];
-        }
-
-        void mouse_click(int x, int y)
-        {
-            if (sim_stat == sim_stat_enum.Running) return;
-
-            // Sets the initial insult location
-            init_insult[0] = (float)x / setts.resolution - (mdl_nerve_r + nerve_clear);
-            init_insult[1] = (float)y / setts.resolution - (mdl_nerve_r + nerve_clear);
-
-            reset_state();
-        }
-
+        
         // ==================== Reset State  =======================
 
         private void reset_state()
@@ -239,8 +145,8 @@ namespace LHON_Form
             {
                 // Identify first dying axon
                 int min_dis = 1000000000;
-                int iicx = (int)((init_insult[0] + mdl_nerve_r + nerve_clear) * setts.resolution);
-                int iicy = (int)((init_insult[1] + mdl_nerve_r + nerve_clear) * setts.resolution);
+                int iicx = (int)((init_insult[0] + mdl_nerve_r) * setts.resolution + 1);
+                int iicy = (int)((init_insult[1] + mdl_nerve_r) * setts.resolution + 1);
                 float min_first_r = float.Parse(txt_min_first_r.Text) * setts.resolution;
                 for (int i = 0; i < mdl.n_axons; i++)
                 {
@@ -293,7 +199,9 @@ namespace LHON_Form
                 load_gpu_from_cpu();
 
                 update_show_opts();
-                update_bmp_from_tox(true);
+
+                gpu.CopyToDevice(tox, tox_dev);
+                update_bmp_image();
                 picB_Resize(null, null);
 
                 sim_stat = sim_stat_enum.None;

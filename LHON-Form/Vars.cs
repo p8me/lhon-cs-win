@@ -27,12 +27,10 @@ namespace LHON_Form
     public partial class Main_Form : Form
     {
         const string ProjectOutputDir = @"..\..\Project_Output\";
-        
-        int threads_per_block_1D = 8;
-        
-        int nerve_clear = 4; // clearance of nerve from image borders in unit length
 
-        int stop_iteration = 0;
+        ushort threads_per_block_1D = 1024;
+
+        int stop_at_iteration = 0;
 
         // ======================================================
 
@@ -42,30 +40,22 @@ namespace LHON_Form
         VideoStream aviStream;
 
         int first_axon_idx = 0;
-        
-        Bitmap bmp;
-        ushort im_size;
-        IntPtr bmp_scan0;
-        byte[,,] bmp_bytes;
 
-        bool[] show_opts = new bool[2],
-            show_opts_dev = new bool[2];
-        
         float sum_tox, areal_progress, chron_progress;
         float[] progress_dat = new float[3];
 
         const int progress_num_frames = 20;
         double resolution_reduction_ratio;
         ushort prog_im_siz, prog_im_siz_default = 100;
+
         byte[,] progression_image_dev;
 
         byte[,,] areal_progression_image_stack, chron_progression_image_stack;
         float[] areal_progress_chron_val, chron_progress_areal_val;
         uint areal_progression_image_stack_cnt, chron_progression_image_stack_cnt;
-
         float[,] progression_image_sum_float_dev;
         uint[,] progress_image_num_averaged_pix_dev;
-        
+
         float areal_progress_lim;
 
         bool stop_sweep_req = false, sweep_is_running = false;
@@ -73,17 +63,16 @@ namespace LHON_Form
         float[] sum_tox_dev, progress_dev;
 
         uint iteration = 0;
-        
+
         float area_res_factor = 1;
 
         float[] init_insult = new float[2] { 0, 0 };
         
-        dim3 blocks_per_grid, threads_per_block;
-        byte[,,] bmp_dev;
-        
+        byte[,,] bmp_bytes_dev;
+
         enum sim_stat_enum { None, Running, Paused, Successful, Failed };
         sim_stat_enum sim_stat = sim_stat_enum.None;
-        
+
         private class axon_lbl_class
         {
             public string lbl;
@@ -93,7 +82,7 @@ namespace LHON_Form
 
         axon_lbl_class[] axon_lbl;
 
-        
+
 
         public class Setts
         {
@@ -155,7 +144,7 @@ namespace LHON_Form
                 Debug.WriteLine("Total: " + (tot_time / 1000).ToString("0.000") + "s");
                 for (int k = 0; k < T.Length; k++)
                     if (T[k] > 0)
-                        Debug.WriteLine("{0}:\t{1}%\t{2}ms\t{3}K >> {4}ms", k, (T[k] / tot_time * 100).ToString("00.0"), T[k].ToString("000000"), (num_occur[k]/1000).ToString("0000"), (T[k]/num_occur[k]).ToString("000.000"));
+                        Debug.WriteLine("{0}:\t{1}%\t{2}ms\t{3}K >> {4}ms", k, (T[k] / tot_time * 100).ToString("00.0"), T[k].ToString("000000"), (num_occur[k] / 1000).ToString("0000"), (T[k] / num_occur[k]).ToString("000.000"));
             }
         }
         profile_class gpu_prof = new profile_class(), alg_prof = new profile_class();
@@ -163,6 +152,11 @@ namespace LHON_Form
 
 
         // ======= Basic Math Functions =========
+
+        private float pow2f(float x)
+        {
+            return x * x;
+        }
 
         private float Maxf(float v1, float v2)
         {
@@ -183,7 +177,7 @@ namespace LHON_Form
         {
             return (v1 < v2) ? v1 : v2;
         }
-        
+
         private float within_circle2(int x, int y, float xc, float yc, float rc)
         {
             float dx = (float)x - xc;

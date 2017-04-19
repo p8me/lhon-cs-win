@@ -32,7 +32,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>true</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -96,7 +96,8 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Cuda_Funcs.cs" />
+    <Compile Include="bmp_image.cs" />
+    <Compile Include="GPU.cs" />
     <Compile Include="file_interface.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="GUI.cs" />
@@ -125,6 +126,8 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Cuda\cuda_diffusion.cu" />
+    <None Include="Cuda\cuda_tox_sum.cu" />
+    <None Include="Cuda\cuda_update_image.cu" />
     <None Include="Cuda\cuda_update_live.cu" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">

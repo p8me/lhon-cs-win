@@ -1,29 +1,28 @@
 ﻿
-extern "C" __global__  void cuda_diffusion(unsigned int im_size, float* tox, float* rate, float* detox, float* tox_prod)
+extern "C" __global__  void cuda_diffusion(int* pix_idx, int pix_idx_num, unsigned short im_size,
+	float* tox, float* rate, float* detox, float* tox_prod)
 {
-	int x = blockIdx.x * blockDim.x + threadIdx.x;
-	int y = blockIdx.y * blockDim.y + threadIdx.y;
-	int x_y = x * im_size + y;
+	int idx = (blockIdx.x * gridDim.y + blockIdx.y) * blockDim.x + threadIdx.x;
+	if (idx < pix_idx_num)
+	{
+		int xy = pix_idx[idx];
 
-	int x_y_1 = x_y + im_size;
-	int x_y_2 = x_y - im_size;
-	int x_y_3 = x_y + 1;
-	int x_y_4 = x_y - 1;
-	int x_y4 = 4 * x_y;
+		int xy0 = xy + im_size;
+		int xy1 = xy - im_size;
+		int xy2 = xy + 1;
+		int xy3 = xy - 1;
+		int xy4 = xy * 4;
 
-	float t = tox[x_y];
-	
-	tox[x_y] +=
-		(tox[x_y_1] - t) * rate[x_y4] +
-		(tox[x_y_2] - t) * rate[x_y4 + 1] +
-		(tox[x_y_3] - t) * rate[x_y4 + 2] +
-		(tox[x_y_4] - t) * rate[x_y4 + 3];
-	
-	tox[x_y] += tox_prod[x_y];
+		float t = tox[xy];
 
-	tox[x_y] *= detox[x_y];
-	
-	// 12 float operations
-	// 14 int operations (including indices)
-	// 10 array addressing
+		tox[xy] +=
+			(tox[xy0] - t) * rate[xy4] +
+			(tox[xy1] - t) * rate[xy4 + 1] +
+			(tox[xy2] - t) * rate[xy4 + 2] +
+			(tox[xy3] - t) * rate[xy4 + 3];
+
+		//tox[xy] += tox_prod[xy];
+
+		//tox[xy] *= detox[xy];
+	}
 }

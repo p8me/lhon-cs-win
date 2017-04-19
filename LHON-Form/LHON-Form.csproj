@@ -32,7 +32,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -126,6 +126,7 @@
       <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Cuda\cuda_diffusion.cu" />
+    <None Include="Cuda\cuda_prep.cu" />
     <None Include="Cuda\cuda_tox_sum.cu" />
     <None Include="Cuda\cuda_update_image.cu" />
     <None Include="Cuda\cuda_update_live.cu" />

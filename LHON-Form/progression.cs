@@ -1,6 +1,15 @@
 ﻿
 /*
 
+ NO_GUI
+            for (int y = 0; y < im_size; y++)
+                for (int x = 0; x < im_size; x++)
+                    if (within_circle2_int(x, y, nerve_r_pix) > 0)
+                    {
+                        temp++;
+                        if (tox[x, y] > 0) areal_progress_lim++;
+                    }
+
 NO_PROGRESSION
                    gpu.Set(progress_dev);
                    gpu.Launch(blocks_per_grid_pix, threads_per_block)).gpu_areal_progress(tox_dev, locked_pix_dev, progress_dev, areal_progress_lim);

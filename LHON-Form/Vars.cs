@@ -153,10 +153,8 @@ namespace LHON_Form
 
         // ======= Basic Math Functions =========
 
-        private float pow2f(float x)
-        {
-            return x * x;
-        }
+        private float pow2(float x){return x * x;}
+        private int pow2(int x) { return x * x; }
 
         private float Maxf(float v1, float v2)
         {

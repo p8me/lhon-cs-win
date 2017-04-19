@@ -84,7 +84,7 @@ namespace LHON_Form
             
             alg_prof.time(0);
 
-            gui_iteration_period = 10; // Max(10, (int)pow2f(im_size));
+            gui_iteration_period = 10; // Max(10, (int)pow2(im_size));
 
             tt_sim.start();
 
@@ -144,24 +144,23 @@ namespace LHON_Form
             else
             {
                 // Identify first dying axon
-                int min_dis = 1000000000;
-                int iicx = (int)((init_insult[0] + mdl_nerve_r) * setts.resolution + 1);
-                int iicy = (int)((init_insult[1] + mdl_nerve_r) * setts.resolution + 1);
-                float min_first_r = float.Parse(txt_min_first_r.Text) * setts.resolution;
-                for (int i = 0; i < mdl.n_axons; i++)
-                {
-                    int dx = (int)axons_coor[i, 0] - iicx;
-                    int dy = (int)axons_coor[i, 1] - iicy;
-                    int dis = (dx * dx + dy * dy);
-                    if (min_dis > dis && axons_coor[i, 2] > min_first_r)
-                    {
-                        min_dis = dis;
-                        first_axon_idx = i;
-                    }
-
-                    axon_is_alive[i] = true;
-                    death_itr[i] = 0;
-                }
+                //int min_dis = 1000000000;
+                //int iicx = (int)((init_insult[0] + mdl_nerve_r) * setts.resolution + 1);
+                //int iicy = (int)((init_insult[1] + mdl_nerve_r) * setts.resolution + 1);
+                //float min_first_r = float.Parse(txt_min_first_r.Text) * setts.resolution;
+                //for (int i = 0; i < mdl.n_axons; i++)
+                //{
+                //    int dx = (int)axons_coor[i, 0] - iicx;
+                //    int dy = (int)axons_coor[i, 1] - iicy;
+                //    int dis = (dx * dx + dy * dy);
+                //    if (min_dis > dis && axons_coor[i, 2] > min_first_r)
+                //    {
+                //        min_dis = dis;
+                //        first_axon_idx = i;
+                //    }
+                //    axon_is_alive[i] = true;
+                //    death_itr[i] = 0;
+                //}
 
                 tox = (float[,])tox_init.Clone();
                 rate = (float[,,])rate_init.Clone();

@@ -30,6 +30,9 @@ namespace LHON_Form
 
         bool _mousePressed;
 
+        int stop_at_iteration = 0;
+        float stop_at_time = 0;
+
         public Main_Form()
         {
             InitializeComponent();
@@ -40,6 +43,7 @@ namespace LHON_Form
             chk_show_tox.CheckedChanged += (o, e) => update_show_opts();
 
             txt_stop_itr.TextChanged += (s, e) => stop_at_iteration = read_int(s);
+            txt_stop_time.TextChanged += (s, e) => stop_at_time = read_float(s);
 
             txt_block_siz.TextChanged += (s, e) => threads_per_block_1D = (ushort)read_int(s);
 
@@ -241,12 +245,11 @@ namespace LHON_Form
             Invoke(new Action(() =>
             {
                 lbl_itr.Text = iteration.ToString("0");
-                lbl_tox.Text = (sum_tox / area_res_factor).ToString("0");
-                lbl_areal_progress.Text = (areal_progress * 100).ToString("0.0") + "%";
+                lbl_tox.Text = (sum_tox/1000000).ToString("0.00") + " Mol";
+                lbl_real_time.Text = time.ToString("0.0");
                 lbl_alive_axons_perc.Text = ((float)num_alive_axons[0] * 100 / mdl.n_axons).ToString("0.0") + "%";
                 var span = TimeSpan.FromSeconds(tt_sim.read() / 1000);
-                lbl_el_time.Text = string.Format("{0}:{1:00}:{2:00}", (int)span.TotalHours, span.Minutes, span.Seconds);
-
+                lbl_sim_time.Text = string.Format("{0:00}:{1:00}:{2:00}", span.Minutes, span.Seconds, span.Milliseconds);
 
                 float itr_p_s = 0;
                 if (sim_stat == sim_stat_enum.Running)
@@ -262,7 +265,6 @@ namespace LHON_Form
 
                 string s = itr_p_s.ToString("0.0");
                 lbl_itr_s.Text = s;
-                lbl_chron_progress.Text = (chron_progress * 100).ToString("0.0") + "%";
 
                 float x = (float)iteration / last_itr;
                 float rat = 0.3F;
@@ -298,8 +300,6 @@ namespace LHON_Form
             txt_resolution.TextChanged += (s, e) =>
             {
                 setts.resolution = read_float(s);
-                float temp = setts.resolution * (axon_max_r_mean + axon_min_r_mean) / 2;
-                area_res_factor = Maxf(temp * temp * 2, 1F);
             };
 
             txt_detox_extra.TextChanged += (s, e) => setts.detox_extra = read_float(s);
@@ -437,8 +437,6 @@ namespace LHON_Form
                 return 0;
             }
             return num;
-        }
-        
+        }        
     }
 }
-

@@ -31,12 +31,12 @@ namespace LHON_Form
         const int max_resident_blocks = 16;
         const int max_resident_threads = 2048;
         const int warp_size = 32;
-        
+
         public bool init_gpu()
         {
             try { gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId); }
             catch { return true; }
-            
+
             int deviceCount = CudafyHost.GetDeviceCount(CudafyModes.Target);
             if (deviceCount == 0) return true;
 
@@ -52,7 +52,7 @@ namespace LHON_Form
             append_stat_ln("Running on " + gpu_name);
 
             CudafyModule km = CudafyModule.TryDeserialize();
-            if (recompile_cuda && (km == null || !km.TryVerifyChecksums())) 
+            if (recompile_cuda && (km == null || !km.TryVerifyChecksums()))
             {
                 km = CudafyTranslator.Cudafy();
                 km.TrySerialize();
@@ -73,9 +73,7 @@ namespace LHON_Form
         {
             GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
 
-            gpu.FreeAll();
-
-            gpu.Synchronize();
+            gpu.FreeAll(); gpu.Synchronize();
 
             tox_dev = gpu.Allocate(tox); gpu.CopyToDevice(tox, tox_dev);
             rate_dev = gpu.Allocate(rate); gpu.CopyToDevice(rate, rate_dev);
@@ -105,8 +103,7 @@ namespace LHON_Form
             blocks_per_grid_1D_axons = mdl.n_axons / threads_per_block_1D + 1;
 
             show_opts_dev = gpu.Allocate(show_opts); gpu.CopyToDevice(show_opts, show_opts_dev);
-
-
+            
             axons_inside_pix_dev = gpu.Allocate(axons_inside_pix); gpu.CopyToDevice(axons_inside_pix, axons_inside_pix_dev);
             axons_inside_pix_idx_dev = gpu.Allocate(axons_inside_pix_idx); gpu.CopyToDevice(axons_inside_pix_idx, axons_inside_pix_idx_dev);
 
@@ -138,11 +135,18 @@ namespace LHON_Form
         //         Dummy functions (defined in native cuda @ cuda/...)
         // ==================================================================
 
-        [CudafyDummy] public static void cuda_update_live() { }
-        [CudafyDummy] public static void cuda_diffusion() { }
-        [CudafyDummy] public static void cuda_update_image() { }
-        [CudafyDummy] public static void cuda_tox_sum() { }
-        
+        [CudafyDummy]
+        public static void cuda_update_live() { }
+        [CudafyDummy]
+        public static void cuda_diffusion() { }
+        [CudafyDummy]
+        public static void cuda_update_image() { }
+        [CudafyDummy]
+        public static void cuda_tox_sum() { }
+        [CudafyDummy]
+        public static void cuda_prep0() { }
+        [CudafyDummy]
+        public static void cuda_prep1() { }
     }
 }
 

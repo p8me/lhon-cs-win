@@ -1,5 +1,15 @@
 ﻿
 /*
+ *  First iteration:
+ //progress_step = 1F / (float)progress_num_frames;
+                //next_areal_progress_snapshot = progress_step;
+                //next_chron_progress_snapshot = progress_step;
+                //areal_progression_image_stack_cnt = 0;
+                //chron_progression_image_stack_cnt = 0;
+                //last_itr = (uint)(mdl_nerve_r * Math.Pow(setts.resolution, 4) * 1.6F);
+                //last_areal_prog = 1F - ((axon_min_r_mean + axon_max_r_mean) / mdl_nerve_r / 2) * ((axon_min_r_mean + axon_max_r_mean) / mdl_nerve_r / 2);
+
+/*
 
  NO_GUI
             for (int y = 0; y < im_size; y++)

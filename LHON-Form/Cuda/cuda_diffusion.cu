@@ -21,8 +21,7 @@ extern "C" __global__  void cuda_diffusion(int* pix_idx, int pix_idx_num, unsign
 			(tox[xy2] - t) * rate[xy4 + 2] +
 			(tox[xy3] - t) * rate[xy4 + 3];
 
-		//tox[xy] += tox_prod[xy];
-
-		//tox[xy] *= detox[xy];
+		tox[xy] += tox_prod[xy];
+		tox[xy] *= detox[xy];
 	}
 }

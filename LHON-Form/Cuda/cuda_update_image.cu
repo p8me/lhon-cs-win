@@ -19,9 +19,9 @@ extern "C" __global__  void cuda_update_image(unsigned short im_size, unsigned s
 		//g = 255 - v;
 
 		// live
-		//if (axon_mask[xy] >= 1) { b = 255; }
+		if (axon_mask[xy] >= 1) { b = 255; }
 		// dead
-		//else if (axon_mask[xy] == 2) { b = 0; g = 0; }
+		else if (axon_mask[xy] == 2) { b = 0; g = 0; }
 
 		bmp[xy4_bmp] = b;
 		bmp[xy4_bmp + 1] = g;

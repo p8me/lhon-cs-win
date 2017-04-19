@@ -58,57 +58,47 @@ namespace LHON_Form
         // =============================== MAIN LOOP
 
         bool en_prof = false;
+        float dt;
 
         unsafe private void Run_Alg_GPU()
         {
+            gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId); // should be reloaded for reliability 
+            alg_prof.time(0);
+
+            gui_iteration_period = 10; // should be function of im_siz
+
             if (iteration == 0)
             {
                 load_gpu_from_cpu();
-
-                progress_step = 1F / (float)progress_num_frames;
-
-                next_areal_progress_snapshot = progress_step;
-                next_chron_progress_snapshot = progress_step;
-
-                areal_progression_image_stack_cnt = 0;
-                chron_progression_image_stack_cnt = 0;
-
                 tt_sim.restart();
-
-                last_itr = (uint)(mdl_nerve_r * Math.Pow(setts.resolution, 4) * 1.6F);
-                last_areal_prog = 1F - ((axon_min_r_mean + axon_max_r_mean) / mdl_nerve_r / 2) * ((axon_min_r_mean + axon_max_r_mean) / mdl_nerve_r / 2);
                 tic();
+                dt = 1F / pow2(setts.resolution);
             }
-
-            gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId); // should be reloaded for reliability
-            
-            alg_prof.time(0);
-
-            gui_iteration_period = 10; // Max(10, (int)pow2(im_size));
-
             tt_sim.start();
 
             while (true)
             {
                 iteration++;
+                time += dt;
 
                 bool update_gui = iteration % gui_iteration_period == 0;
 
-                alg_prof.time(-1); 
+                alg_prof.time(-1);
 
                 gpu.Launch(blocks_per_grid_1D_axons, threads_per_block_1D).cuda_update_live(mdl.n_axons, tox_dev, rate_dev, detox_dev, tox_prod_dev, k_rate_dead_axon, k_detox_extra, death_tox_lim,
                     axons_cent_pix_dev, axons_inside_pix_dev, axons_inside_pix_idx_dev, axon_surr_rate_dev, axon_surr_rate_idx_dev,
                     axon_is_alive_dev, axon_mask_dev, num_alive_axons_dev, death_itr_dev, iteration);
                 if (en_prof) { gpu.Synchronize(); alg_prof.time(1); }
-                
+
                 gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_diffusion(pix_idx_dev, pix_idx_num, im_size,
                     tox_dev, rate_dev, detox_dev, tox_prod_dev);
-                
+
                 if (en_prof) { gpu.Synchronize(); alg_prof.time(2); }
 
                 if (update_gui)
                 {
                     gpu.CopyFromDevice(axon_is_alive_dev, axon_is_alive);
+                    gpu.CopyFromDevice(num_alive_axons_dev, num_alive_axons);
 
                     // Calc tox_sum for sanity check
                     gpu.Set(sum_tox_dev);
@@ -125,7 +115,7 @@ namespace LHON_Form
                 }
 
                 if (sim_stat != sim_stat_enum.Running) break;
-                if (iteration == stop_at_iteration) stop_sim(sim_stat_enum.Paused);
+                if (iteration == stop_at_iteration || (stop_at_time > 0 && time >= stop_at_time)) stop_sim(sim_stat_enum.Paused);
             }
 
             tt_sim.pause();
@@ -134,7 +124,7 @@ namespace LHON_Form
             else Debug.WriteLine("Sim took " + (toc() / 1000).ToString("0.000") + " secs\n");
         }
 
-        
+
         // ==================== Reset State  =======================
 
         private void reset_state()
@@ -174,6 +164,7 @@ namespace LHON_Form
                 */
 
                 iteration = 0;
+                time = 0;
 
                 update_gui_labels();
 

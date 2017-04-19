@@ -29,9 +29,7 @@ namespace LHON_Form
         const string ProjectOutputDir = @"..\..\Project_Output\";
 
         ushort threads_per_block_1D = 1024;
-
-        int stop_at_iteration = 0;
-
+        
         // ======================================================
 
         private BackgroundWorker alg_worker = new BackgroundWorker(), new_model_worker = new BackgroundWorker();
@@ -64,7 +62,7 @@ namespace LHON_Form
 
         uint iteration = 0;
 
-        float area_res_factor = 1;
+        float time;
 
         float[] init_insult = new float[2] { 0, 0 };
         

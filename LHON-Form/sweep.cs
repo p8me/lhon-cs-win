@@ -203,14 +203,14 @@ namespace LHON_Form
                 case param_select.Resolution:
                     setts.resolution = val;
                     break;
-                case param_select.Insult_Rad:
-                    init_insult[0] = mdl.nerve_scale_ratio * (val * 2 - 1);
-                    init_insult[1] = 0;
-                    break;
-                case param_select.Insult_Peri:
-                    init_insult[0] = -mdl.nerve_scale_ratio * (float)Math.Cos(val * Math.PI / 180);
-                    init_insult[1] = -mdl.nerve_scale_ratio * (float)Math.Sin(val * Math.PI / 180);
-                    break;
+                //case param_select.Insult_Rad:
+                //    init_insult[0] = mdl.nerve_scale_ratio * (val * 2 - 1);
+                //    init_insult[1] = 0;
+                //    break;
+                //case param_select.Insult_Peri:
+                //    init_insult[0] = -mdl.nerve_scale_ratio * (float)Math.Cos(val * Math.PI / 180);
+                //    init_insult[1] = -mdl.nerve_scale_ratio * (float)Math.Sin(val * Math.PI / 180);
+                //    break;
             }
             return val;
         }

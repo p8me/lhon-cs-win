@@ -156,7 +156,7 @@ namespace LHON_Form
         }
         */
 
-        float x0 = 0, y0 = 0, r, r1 = 0, Rc_avg; // in length unit
+        float x0 = 0, y0 = 0, r, r1 = 0; // in length unit
         float x2 = 0, x1 = 0, y2 = 0, y1 = 0; // in length unit
         float angle = 0;
         int xc = 0, yc = 0, rc = 0; // in pixels
@@ -224,7 +224,7 @@ namespace LHON_Form
 
             update_bottom_stat("Generating Model...");
 
-            mdl_resolution = 25; // 8 / mdl.clearance;
+            mdl_resolution = 25; // Resolution of image during model generation
 
             im_size = (ushort)(mdl_nerve_r * 2 * mdl_resolution);
 
@@ -306,7 +306,8 @@ namespace LHON_Form
 
                 mdl_axons_coor.Add(new float[3] { x0, y0, r });
                 mdl_n_axons++;
-                update_num_axons_lbl();
+
+                if (i % 10 == 0) update_num_axons_lbl();
 
                 x2 = x1; x1 = x0;
                 y2 = y1; y1 = y0;

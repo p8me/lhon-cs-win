@@ -88,6 +88,7 @@ namespace LHON_Form
             num_alive_axons_dev = gpu.Allocate<int>(1); gpu.CopyToDevice(num_alive_axons, num_alive_axons_dev);
             death_itr_dev = gpu.Allocate(death_itr); gpu.CopyToDevice(death_itr, death_itr_dev);
             bmp_bytes_dev = gpu.Allocate(bmp_bytes); gpu.CopyToDevice(bmp_bytes, bmp_bytes_dev);
+            init_insult_mask_dev = gpu.Allocate<byte>(bmp_im_size, bmp_im_size);
 
             sum_tox_dev = gpu.Allocate<float>(1);
             progress_dev = gpu.Allocate<float>(3);
@@ -116,7 +117,7 @@ namespace LHON_Form
 
             Debug.WriteLine("GPU used memory: " + (100.0 * (1 - (double)gpu.FreeMemory / (double)gpu.TotalMemory)).ToString("0.0") + " %\n");
         }
-
+        /*
         private void load_cpu_from_gpu()
         {
             //GPGPU gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId);
@@ -129,7 +130,7 @@ namespace LHON_Form
             gpu.CopyFromDevice(axon_is_alive_dev, axon_is_alive);
             gpu.CopyFromDevice(death_itr_dev, death_itr);
         }
-
+        */
 
         // ==================================================================
         //         Dummy functions (defined in native cuda @ cuda/...)
@@ -147,6 +148,8 @@ namespace LHON_Form
         public static void cuda_prep0() { }
         [CudafyDummy]
         public static void cuda_prep1() { }
+        [CudafyDummy]
+        public static void cuda_update_init_insult() { }
     }
 }
 

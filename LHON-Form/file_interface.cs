@@ -78,8 +78,8 @@ namespace LHON_Form
                     writer.Write(im_size);
                     writer.Write(prog_im_siz);
 
-                    writer.Write(init_insult[0]);
-                    writer.Write(init_insult[1]);
+                    //writer.Write(init_insult[0]);
+                    //writer.Write(init_insult[1]);
                     writer.Write(progress_num_frames);
                     writer.Write(tt_sim.read());
                     writer.Write(last_itr);

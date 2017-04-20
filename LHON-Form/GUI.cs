@@ -28,10 +28,31 @@ namespace LHON_Form
     {
         GifBitmapEncoder gifEnc = new GifBitmapEncoder();
 
-        bool _mousePressed;
+        /*
+        bool mouse_r_pressed;
+        int mouse_r_press_x, mouse_r_press_y;
+        picB.MouseDown += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Right)
+                {
+                    mouse_r_pressed = true;
+                    mouse_r_press_x = e.X;
+                    mouse_r_press_y = e.Y;
+                }
+        };
+        picB.MouseUp += (s, e) =>
+            {
+                if (e.Button == MouseButtons.Right)
+                {
+                    mouse_r_pressed = false;
+                }
+            };
+        picB.MouseMove += (s, e) => if (mouse_r_pressed) ...
+        */
 
         int stop_at_iteration = 0;
         float stop_at_time = 0;
+        int main_loop_delay = 0;
 
         public Main_Form()
         {
@@ -39,11 +60,12 @@ namespace LHON_Form
             this.CenterToScreen();
             DoubleBuffered = true;
 
-            chk_show_bound.CheckedChanged += (o, e) => update_show_opts();
+            chk_show_axons.CheckedChanged += (o, e) => update_show_opts();
             chk_show_tox.CheckedChanged += (o, e) => update_show_opts();
 
             txt_stop_itr.TextChanged += (s, e) => stop_at_iteration = read_int(s);
             txt_stop_time.TextChanged += (s, e) => stop_at_time = read_float(s);
+            txt_delay_ms.TextChanged += (s, e) => main_loop_delay = read_int(s);
 
             txt_block_siz.TextChanged += (s, e) => threads_per_block_1D = (ushort)read_int(s);
 
@@ -128,22 +150,26 @@ namespace LHON_Form
 
             txt_block_siz.Text = threads_per_block_1D.ToString("0");
 
-
-            //picB.MouseDown += (s, e) => _mousePressed = true;
-            //picB.MouseUp += (s, e) => _mousePressed = false;
-            //picB.MouseMove += (s, e) =>
-            //{
-            //    if (_mousePressed)
-            //    {
-            //        // Debug.WriteLine("dragging");
-            //    }
-            //};
-
+            picB.MouseWheel += (s, e) =>
+            {
+                float[] um = get_mouse_click_um(e);
+                float dx = insult_x - um[0], dy = insult_y - um[1];
+                float dist = dx * dx + dy * dy;
+                if (insult_r * insult_r - dist > 0 || dist < 100)
+                {
+                    insult_r += (float)e.Delta / 100;
+                    if (insult_r < 0) insult_r = 0;
+                    update_init_insult();
+                    update_bmp_image();
+                    Debug.WriteLine(insult_r);
+                }
+            };
+            picB.Click += (s, e) => mouse_click(e as MouseEventArgs);
         }
 
         void update_show_opts()
         {
-            show_opts[0] = chk_show_bound.Checked;
+            show_opts[0] = chk_show_axons.Checked;
             show_opts[1] = chk_show_tox.Checked;
 
             gpu.CopyToDevice(show_opts, show_opts_dev);
@@ -245,7 +271,7 @@ namespace LHON_Form
             Invoke(new Action(() =>
             {
                 lbl_itr.Text = iteration.ToString("0");
-                lbl_tox.Text = (sum_tox/1000000).ToString("0.00") + " Mol";
+                lbl_tox.Text = (sum_tox / 1000000).ToString("0.00") + " Mol";
                 lbl_real_time.Text = time.ToString("0.0");
                 lbl_alive_axons_perc.Text = ((float)num_alive_axons[0] * 100 / mdl.n_axons).ToString("0.0") + "%";
                 var span = TimeSpan.FromSeconds(tt_sim.read() / 1000);
@@ -277,13 +303,6 @@ namespace LHON_Form
                     lbl_rem_time.Text = string.Format("{0}:{1:00}:{2:00}", (int)span.TotalHours, span.Minutes, span.Seconds);
                 }
             }));
-
-            if (chk_axons_tox_lvl.Checked)
-            {
-                for (int i = 0; i < mdl.n_axons; i++)
-                    if (axon_is_large[i] && !axon_is_alive[i])
-                        axon_lbl[i].lbl = "X";
-            }
         }
 
         // ====================================================================
@@ -292,7 +311,11 @@ namespace LHON_Form
 
         void init_settings_gui()
         {
-            txt_nerve_scale.TextChanged += (s, e) => mdl.nerve_scale_ratio = read_float(s) / 100F;
+            txt_nerve_scale.TextChanged += (s, e) =>
+            {
+                mdl.nerve_scale_ratio = read_float(s) / 100F;
+                lbl_nerve_siz.Text = (mdl.nerve_scale_ratio * mdl_real_nerve_r * 2).ToString(".0") + " um";
+            };
             txt_vein_rad.TextChanged += (s, e) => mdl.vessel_ratio = read_float(s) / 100F;
             txt_clearance.TextChanged += (s, e) => mdl.clearance = read_float(s);
             txt_circ_gen_ratio.TextChanged += (s, e) => mdl.circ_gen_ratio = read_float(s);
@@ -310,7 +333,9 @@ namespace LHON_Form
             txt_rate_extra.TextChanged += (s, e) => setts.rate_extra = read_float(s);
             txt_rate_live.TextChanged += (s, e) => setts.rate_live = read_float(s);
             txt_tox_prod_rate.TextChanged += (s, e) => setts.tox_prod = read_float(s);
-            txt_death_tox_lim.TextChanged += (s, e) => setts.death_tox_lim = read_float(s);
+            txt_death_tox_threshold.TextChanged += (s, e) => setts.death_tox_thres = read_float(s);
+            txt_insult_concent.TextChanged += (s, e) => setts.insult_tox = read_float(s);
+
 
             btn_save_model.Click += (s, e) =>
             {
@@ -341,6 +366,8 @@ namespace LHON_Form
             {
                 var fil_name = ProjectOutputDir + @"Settings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".sdat";
                 Debug.WriteLine(fil_name);
+
+                setts.insult = new float[] { insult_x, insult_y, insult_r };
 
                 FileStream outFile = File.Create(fil_name);
                 XmlSerializer formatter = XmlSerializer.FromTypes(new[] { setts.GetType() })[0];
@@ -392,6 +419,11 @@ namespace LHON_Form
             aFile.Read(buffer, 0, (int)aFile.Length);
             MemoryStream stream = new MemoryStream(buffer);
             setts = (Setts)formatter.Deserialize(stream);
+
+            insult_x = setts.insult[0];
+            insult_y = setts.insult[1];
+            insult_r = setts.insult[2];
+
             aFile.Close();
 
             update_mdl_and_setts_ui();
@@ -414,7 +446,10 @@ namespace LHON_Form
             txt_rate_live.Text = setts.rate_live.ToString();
 
             txt_tox_prod_rate.Text = setts.tox_prod.ToString();
-            txt_death_tox_lim.Text = setts.death_tox_lim.ToString();
+            txt_death_tox_threshold.Text = setts.death_tox_thres.ToString();
+            txt_insult_concent.Text = setts.insult_tox.ToString();
+
+            update_num_axons_lbl();
         }
 
         float read_float(object o)
@@ -437,6 +472,6 @@ namespace LHON_Form
                 return 0;
             }
             return num;
-        }        
+        }
     }
 }

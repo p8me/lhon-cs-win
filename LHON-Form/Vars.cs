@@ -1,25 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using AviFile;
-using System.Drawing.Drawing2D;
-using System.Xml.Serialization;
-using System.IO;
-
-using Cudafy;
-using Cudafy.Host;
-using Cudafy.Atomics;
-using Cudafy.Translator;
-using System.Runtime.InteropServices;
 
 
 namespace LHON_Form
@@ -64,10 +47,8 @@ namespace LHON_Form
 
         float time;
 
-        float[] init_insult = new float[2] { 0, 0 };
+        // float[] init_insult = new float[2] { 0, 0 };
         
-        byte[,,] bmp_bytes_dev;
-
         enum sim_stat_enum { None, Running, Paused, Successful, Failed };
         sim_stat_enum sim_stat = sim_stat_enum.None;
 
@@ -95,7 +76,11 @@ namespace LHON_Form
             public float detox_intra;
             public float detox_extra;
 
-            public float death_tox_lim;
+            public float death_tox_thres;
+
+            public float[] insult;
+
+            public float insult_tox;
         }
 
         Model mdl = new Model();
@@ -145,7 +130,7 @@ namespace LHON_Form
                         Debug.WriteLine("{0}:\t{1}%\t{2}ms\t{3}K >> {4}ms", k, (T[k] / tot_time * 100).ToString("00.0"), T[k].ToString("000000"), (num_occur[k] / 1000).ToString("0000"), (T[k] / num_occur[k]).ToString("000.000"));
             }
         }
-        profile_class gpu_prof = new profile_class(), alg_prof = new profile_class();
+        profile_class gpu_prof = new profile_class(), alg_prof = new profile_class(), prep_prof = new profile_class();
 
 
 

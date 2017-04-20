@@ -32,7 +32,9 @@ namespace LHON_Form
 
         Bitmap bmp;
         IntPtr bmp_scan0;
-        byte[,,] bmp_bytes;
+        byte[,,] bmp_bytes, bmp_bytes_dev;
+
+        byte[,] init_insult_mask_dev;
 
         float bmp_image_compression_ratio;
 
@@ -73,10 +75,10 @@ namespace LHON_Form
             else
             {
                 gpu.Launch(update_bmp_gride_size_2D, update_bmp_block_size_2D).cuda_update_image(im_size, bmp_im_size, bmp_image_compression_ratio,
-                    bmp_bytes_dev, tox_dev, axon_mask_dev, death_tox_lim, show_opts_dev);
+                    bmp_bytes_dev, tox_dev, axon_mask_dev, init_insult_mask_dev, death_tox_thres, show_opts_dev);
 
                 gpu.CopyFromDevice(bmp_bytes_dev, bmp_bytes);
-                gpu.CopyFromDevice(tox_dev, tox);
+                // gpu.CopyFromDevice(tox_dev, tox);
 
                 fixed (byte* dat = &bmp_bytes[0, 0, 0])
                     CopyMemory(bmp_scan0, (IntPtr)dat, (uint)bmp_bytes.Length);
@@ -93,6 +95,18 @@ namespace LHON_Form
                     gifEnc.Frames.Add(BitmapFrame.Create(src));
                 }
             }
+        }
+
+        float insult_x, insult_y, insult_r; // in um
+
+        void update_init_insult()
+        {
+            int insult_x_p = (int)(insult_x * setts.resolution / bmp_image_compression_ratio) + bmp_im_size / 2;
+            int insult_y_p = (int)(insult_y * setts.resolution / bmp_image_compression_ratio) + bmp_im_size / 2;
+            int insult_r2_p = (int)(pow2(insult_r * setts.resolution / bmp_image_compression_ratio));
+
+            gpu.Launch(update_bmp_gride_size_2D, update_bmp_block_size_2D).cuda_update_init_insult(
+                bmp_im_size, insult_x_p, insult_y_p, insult_r2_p, init_insult_mask_dev);
         }
 
         int picB_offx, picB_offy;
@@ -120,6 +134,34 @@ namespace LHON_Form
             }
         }
 
+        float[] get_mouse_click_um(MouseEventArgs e)
+        {
+            float[] um = new float[2];
+            int x = (int)((e.X - picB_offx) / picB_ratio);
+            int y = (int)((e.Y - picB_offy) / picB_ratio);
+            if (x >= 0 && x < im_size && y >= 0 && y < im_size)
+            {
+                // Sets the initial insult location
+                um[1] = (float)(x - 1) / setts.resolution - mdl_nerve_r;
+                um[0] = (float)(y - 1) / setts.resolution - mdl_nerve_r;
+            }
+            return um;
+        }
+
+        void mouse_click(MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right || sim_stat == sim_stat_enum.Running) return;
+
+            // Sets the initial insult location
+            float[] um = get_mouse_click_um(e);
+            insult_x = um[0];
+            insult_y = um[1];
+
+            Debug.WriteLine(insult_x + "  " + insult_y);
+
+            reset_state();
+        }
+
         private void picB_Paint(object sender, PaintEventArgs e)
         {
 
@@ -130,16 +172,16 @@ namespace LHON_Form
                 //SizeF textSize0 = e.Graphics.MeasureString(nlbl0.lbl, this.Font);
                 //e.Graphics.DrawString(nlbl0.lbl, this.Font, Brushes.Beige, nlbl0.x * picB_ratio + picB_offx - (textSize0.Width / 2), nlbl0.y * picB_ratio + picB_offy - (textSize0.Height / 2));
 
-                if (chk_axons_tox_lvl.Checked)
-                    for (int i = 0; i < mdl.n_axons; i++)
-                    {
-                        var nlbl = axon_lbl[i];
-                        if (axon_is_large[i] && i != first_axon_idx && nlbl.lbl.Length > 0)
-                        {
-                            SizeF textSize = e.Graphics.MeasureString(nlbl.lbl, this.Font);
-                            e.Graphics.DrawString(nlbl.lbl, this.Font, Brushes.Red, nlbl.x * picB_ratio + picB_offx - (textSize.Width / 2), nlbl.y * picB_ratio + picB_offy - (textSize.Height / 2));
-                        }
-                    }
+                //if (chk_axons_tox_lvl.Checked)
+                //    for (int i = 0; i < mdl.n_axons; i++)
+                //    {
+                //        var nlbl = axon_lbl[i];
+                //        if (axon_is_large[i] && i != first_axon_idx && nlbl.lbl.Length > 0)
+                //        {
+                //            SizeF textSize = e.Graphics.MeasureString(nlbl.lbl, this.Font);
+                //            e.Graphics.DrawString(nlbl.lbl, this.Font, Brushes.Red, nlbl.x * picB_ratio + picB_offx - (textSize.Width / 2), nlbl.y * picB_ratio + picB_offy - (textSize.Height / 2));
+                //        }
+                //    }
             }
 
             if (show_axon_order_mdl_gen)
@@ -158,27 +200,6 @@ namespace LHON_Form
                     }
             }
         }
-
-        private void picB_Click(object sender, EventArgs e)
-        {
-            //var mouseEventArgs = e as MouseEventArgs;
-            //if (mouseEventArgs != null)
-            //{
-            //    int x = (int)((mouseEventArgs.X - picB_offx) / picB_ratio);
-            //    int y = (int)((mouseEventArgs.Y - picB_offy) / picB_ratio);
-            //    if (x >= 0 && x < im_size && y >= 0 && y < im_size)
-            //    {
-            //        if (sim_stat == sim_stat_enum.Running) return;
-
-            //        // Sets the initial insult location
-            //        init_insult[0] = (float)(x - 1) / setts.resolution - mdl_nerve_r;
-            //        init_insult[1] = (float)(y - 1) / setts.resolution - mdl_nerve_r;
-
-            //        reset_state();
-            //    }
-            //}
-        }
-
 
     }
 }

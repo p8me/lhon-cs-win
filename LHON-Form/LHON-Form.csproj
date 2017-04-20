@@ -129,6 +129,7 @@
     <None Include="Cuda\cuda_prep0.cu" />
     <None Include="Cuda\cuda_prep1.cu" />
     <None Include="Cuda\cuda_tox_sum.cu" />
+    <None Include="Cuda\cuda_update_init_insult.cu" />
     <None Include="Cuda\cuda_update_image.cu" />
     <None Include="Cuda\cuda_update_live.cu" />
     <None Include="packages.config" />

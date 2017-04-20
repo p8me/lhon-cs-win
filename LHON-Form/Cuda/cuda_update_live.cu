@@ -1,5 +1,5 @@
 
-extern "C" __global__  void cuda_update_live(int n_axons, float* tox, float* rate, float* detox, float* tox_prod, float k_rate_dead_axon, float k_detox_extra, float death_tox_lim,
+extern "C" __global__  void cuda_update_live(int n_axons, float* tox, float* rate, float* detox, float* tox_prod, float k_rate_dead_axon, float k_detox_extra, float death_tox_thres,
 	unsigned int * axons_cent_pix, unsigned int* axons_inside_pix, unsigned int* axons_inside_pix_idx, unsigned int* axon_surr_rate, unsigned int* axon_surr_rate_idx,
 	bool* axon_is_alive, unsigned char* axon_mask, int* num_alive_axons, int* death_itr, int iteration)
 {
@@ -7,7 +7,7 @@ extern "C" __global__  void cuda_update_live(int n_axons, float* tox, float* rat
 
 	if (n < n_axons)
 	{
-		if (axon_is_alive[n] && tox[axons_cent_pix[n]] > death_tox_lim)
+		if (axon_is_alive[n] && tox[axons_cent_pix[n]] > death_tox_thres)
 		{ 	// Kill the axon
 			for (int p = axons_inside_pix_idx[n]; p < axons_inside_pix_idx[n + 1]; p++)
 			{

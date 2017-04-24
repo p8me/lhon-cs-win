@@ -19,9 +19,7 @@ namespace LHON_Form
         AviManager aviManager;
         string avi_file;
         VideoStream aviStream;
-
-        int first_axon_idx = 0;
-
+        
         float sum_tox, areal_progress, chron_progress;
         float[] progress_dat = new float[3];
 
@@ -60,9 +58,8 @@ namespace LHON_Form
         }
 
         axon_lbl_class[] axon_lbl;
-
-
-
+        
+        [Serializable]
         public class Setts
         {
             public float resolution;
@@ -200,6 +197,20 @@ namespace LHON_Form
             {
                 sw.Start();
             }
+        }
+
+        public static string dec2base(long value, long toBase)
+        {
+            string result = string.Empty;
+            do
+            {
+                int rem = (int)(value % toBase);
+                result = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[rem] + result;
+                value /= toBase;
+            }
+            while (value > 0);
+
+            return result;
         }
 
     }

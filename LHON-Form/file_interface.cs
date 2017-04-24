@@ -14,6 +14,7 @@ using AviFile;
 using System.Drawing.Drawing2D;
 using System.Xml.Serialization;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 using Cudafy;
 using Cudafy.Host;
@@ -50,18 +51,20 @@ namespace LHON_Form
                     for (int j = 0; j < prog_im_siz; j++)
                         dest[frame, i, j] = progression_image[i, j];
 
-                //Rectangle bounds = picB.Bounds;
-                //var org = picB.PointToScreen(new Point(0, 0));
+                /* From Picture Box
+                Rectangle bounds = picB.Bounds;
+                var org = picB.PointToScreen(new Point(0, 0));
 
-                //using (Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height))
-                //{
-                //    using (Graphics g = Graphics.FromImage(bitmap))
-                //    {
-                //        g.CopyFromScreen(org, Point.Empty, bounds.Size);
-                //    }
-                //    string pth = ProjectOutputDir + @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".jpg";
-                //    bitmap.Save(pth, ImageFormat.Jpeg);
-                //}
+                using (Bitmap bitmap = new Bitmap(bounds.Width, bounds.Height))
+                {
+                    using (Graphics g = Graphics.FromImage(bitmap))
+                    {
+                        g.CopyFromScreen(org, Point.Empty, bounds.Size);
+                    }
+                    string pth = ProjectOutputDir + @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".jpg";
+                    bitmap.Save(pth, ImageFormat.Jpeg);
+                }
+                */
             }
         }
 
@@ -71,57 +74,63 @@ namespace LHON_Form
             {
                 using (BinaryWriter writer = new BinaryWriter(fileStream))
                 {
-                    writer.Write(mdl.nerve_scale_ratio);
-                    writer.Write(mdl.clearance);
-                    writer.Write(mdl.n_axons);
-                    writer.Write(setts.resolution);
-                    writer.Write(im_size);
-                    writer.Write(prog_im_siz);
+                    // Model ID
+                    Debug.WriteLine(model_id);
+                    writer.Write(model_id);
 
-                    //writer.Write(init_insult[0]);
-                    //writer.Write(init_insult[1]);
-                    writer.Write(progress_num_frames);
-                    writer.Write(tt_sim.read());
-                    writer.Write(last_itr);
+                    // Setts
+                    writer.Write(setts.resolution); 
 
-                    for (int m = 0; m < progress_num_frames; m++)
-                        writer.Write(areal_progress_chron_val[m]);
+                    writer.Write(setts.rate_live);
+                    writer.Write(setts.rate_dead);
+                    writer.Write(setts.rate_bound);
+                    writer.Write(setts.rate_extra);
 
-                    for (int m = 0; m < progress_num_frames; m++)
-                        writer.Write(chron_progress_areal_val[m]);
+                    writer.Write(setts.tox_prod);
+                    writer.Write(setts.detox_intra);
+                    writer.Write(setts.detox_extra);
 
+                    writer.Write(setts.death_tox_thres);
+
+                    writer.Write(insult_x);
+                    writer.Write(insult_y);
+                    writer.Write(insult_r);
+
+                    writer.Write(setts.insult_tox);
+
+                    // Death iteration
                     gpu.CopyFromDevice(death_itr_dev, death_itr);
 
-                    //for (int m = 0; m < mdl.n_axons; m++)
-                    //{
-                    //    float x = (mdl.axon_coor[m][0] / mdl.nerve_scale / 2 + 0.5F) * 256F;
-                    //    writer.Write((byte)(x));
-                    //    float y = (mdl.axon_coor[m][1] / mdl.nerve_scale / 2 + 0.5F) * 256F;
-                    //    writer.Write((byte)(y));
-                    //    writer.Write((byte)(mdl.axon_coor[m][2] * 40));
-                    //    float r = (float)death_itr[m] / (float)last_itr * 256F;
-                    //    writer.Write((byte)(r));
-                    //}
-
-                    for (int m = 0; m < progress_num_frames; m++)
-                        for (int i = 0; i < prog_im_siz; i++)
-                            for (int j = 0; j < prog_im_siz; j++)
-                                writer.Write(areal_progression_image_stack[m, i, j]);
-
-                    for (int m = 0; m < progress_num_frames; m++)
-                        for (int i = 0; i < prog_im_siz; i++)
-                            for (int j = 0; j < prog_im_siz; j++)
-                                writer.Write(chron_progression_image_stack[m, i, j]);
-
+                    for (int m = 0; m < mdl.n_axons; m++)
+                        writer.Write(death_itr[m]);
+                    
                     writer.Flush();
 
-                    //append_stat_ln("Sim Progress saved to " + progression_fil_name);
-
+                    append_stat_ln("Sim Progress saved to " + progression_fil_name);
                 }
             }
         }
 
+        // ====================== Binary reader . writer
 
+        public static void WriteToBinaryFile<T>(string filePath, T objectToWrite)
+        {
+            using (Stream stream = File.Create(filePath))
+            {
+                var binaryFormatter = new BinaryFormatter();
+                binaryFormatter.Serialize(stream, objectToWrite);
+            }
+        }
+        public static T ReadFromBinaryFile<T>(string filePath)
+        {
+            using (Stream stream = File.Open(filePath, FileMode.Open))
+            {
+                var binaryFormatter = new BinaryFormatter();
+                return (T)binaryFormatter.Deserialize(stream);
+            }
+        }
+        
+        
         // ====================== Matlab Interface
 
         void Export_model() // no death info, text file
@@ -129,7 +138,7 @@ namespace LHON_Form
             string path = ProjectOutputDir + @"Exported\" + DateTime.Now.ToString("yyyy - MM - dd @HH - mm - ss") + ".txt";
             using (StreamWriter file = new StreamWriter(path, true))
             {
-                file.WriteLine("{0}, {1}, {2}", mdl.nerve_scale_ratio, mdl.vessel_ratio, mdl.clearance);
+                file.WriteLine("{0}, {1}, {2}", mdl.nerve_scale_ratio, mdl_vessel_ratio, mdl_clearance);
                 for (int i = 0; i < mdl.n_axons; i++)
                     file.WriteLine("{0}, {1}, {2}", mdl.axon_coor[i][0], mdl.axon_coor[i][1], mdl.axon_coor[i][2]);
             }

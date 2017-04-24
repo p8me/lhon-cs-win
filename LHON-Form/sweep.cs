@@ -40,17 +40,38 @@ namespace LHON_Form
             else sweep();
         }
 
-        enum param_select
+        string[] parameters_name = new string[]
         {
-            Repeat,
-            Nerve_Rad,
-            Clearance,
-            Resolution,
-            Tolerance,
-            Axon_Rate,
-            Insult_Rad,
-            Insult_Peri
+            "Repeat",
+            "Nerve Scale",
+
+            "Resolution",
+
+            "Live Rate",
+            "Dead Rate",
+            "Boundary Rate",
+            "Extra Rate",
+            "Death Thr",
+            "Tox Prod",
+
+            "Detox Intra",
+            "Detox Extra",
+
+            "Insult Conc",
+            "Insult X",
+            "Insult Y",
+            "Insult R",
         };
+
+
+        void init_sweep()
+        {
+            foreach (var s in parameters_name)
+            {
+                cmb_sw_sel1.Items.Add(s);
+                cmb_sw_sel2.Items.Add(s);
+            }
+        }
 
         async void sweep()
         {
@@ -98,32 +119,33 @@ namespace LHON_Form
                 btn_sweep.Text = "S&top";
                 sweep_is_running = true;
 
-                string parameter_name1 = cmb_sw_sel1.Items[selection1].ToString();
-                string parameter_name2 = cmb_sw_sel2.Items[selection2].ToString();
+                string parameter_name1 = parameters_name[selection1];
+                string parameter_name2 = parameters_name[selection2];
 
                 int failures = 0;
                 string dir_name = null;
 
                 for (int i1 = 0; i1 < sweep_repetitions1; i1++)
                 {
-                    float val1 = sweep_upd_param((param_select)selection1, start1, end1, i1, sweep_repetitions1);
+                    float val1 = sweep_upd_param(selection1, start1, end1, i1, sweep_repetitions1);
                     float val2 = 0;
                     append_stat_ln(parameter_name1 + " : " + val1.ToString());
 
-                    bool regenerate_model = selection1 < (int)param_select.Resolution;
+                    bool sel1_regenerate_model = selection1 < 2;
+                    bool sel2_regenerate_model = selection2 < 2;
                     int i2 = 0;
                     do
                     {
                         if (sweep_repetitions2 > 0)
                         {
-                            val2 = sweep_upd_param((param_select)selection2, start2, end2, i2, sweep_repetitions2);
+                            val2 = sweep_upd_param(selection2, start2, end2, i2, sweep_repetitions2);
                             append_stat_ln(parameter_name2 + " : " + val2.ToString());
                         }
                         update_mdl_and_setts_ui();
 
-                        if (regenerate_model || (sweep_repetitions2 > 0 && selection2 < (int)param_select.Resolution))
+                        if (sel1_regenerate_model || (sweep_repetitions2 > 0 && sel2_regenerate_model))
                         {
-                            regenerate_model = false;
+                            sel1_regenerate_model = false;
                             // Regenerate Model
                             new_model_worker.RunWorkerAsync();
                             await Task.Delay(delay_ms);
@@ -158,12 +180,12 @@ namespace LHON_Form
                                 Directory.CreateDirectory(dir_name);
                             }
                             string par_val;
-                            if ((param_select)selection1 == param_select.Repeat)
+                            if (parameters_name[selection1] == "Repeat")
                                 par_val = val1.ToString("(00)");
                             else
                                 par_val = val1.ToString("(0.00)");
                             if (sweep_repetitions2 > 0)
-                                if ((param_select)selection2 == param_select.Repeat)
+                                if (parameters_name[selection2] == "Repeat")
                                     par_val += val2.ToString("(00)");
                                 else
                                     par_val += val2.ToString("(0.00)");
@@ -184,7 +206,7 @@ namespace LHON_Form
             }
         }
 
-        float sweep_upd_param(param_select selection, float start, float end, int i, int sweep_repetitions)
+        float sweep_upd_param(int selection, float start, float end, int i, int sweep_repetitions)
         {
             float sig = end < start ? -1 : 1;
             float step_siz;
@@ -192,27 +214,75 @@ namespace LHON_Form
             else step_siz = Math.Abs(end - start) / (float)(sweep_repetitions - 1);
             float val = start + sig * step_siz * i;
 
-            switch (selection)
+            switch (parameters_name[selection])
             {
-                case param_select.Nerve_Rad:
+                case "Nerve Scale":
                     mdl.nerve_scale_ratio = val;
                     break;
-                case param_select.Clearance:
-                    mdl.clearance = val;
-                    break;
-                case param_select.Resolution:
+                case "Resolution":
                     setts.resolution = val;
                     break;
-                //case param_select.Insult_Rad:
-                //    init_insult[0] = mdl.nerve_scale_ratio * (val * 2 - 1);
-                //    init_insult[1] = 0;
-                //    break;
-                //case param_select.Insult_Peri:
-                //    init_insult[0] = -mdl.nerve_scale_ratio * (float)Math.Cos(val * Math.PI / 180);
-                //    init_insult[1] = -mdl.nerve_scale_ratio * (float)Math.Sin(val * Math.PI / 180);
-                //    break;
+                case "Live Rate":
+                    setts.rate_live = val;
+                    break;
+                case "Dead Rate":
+                    setts.rate_dead = val;
+                    break;
+                case "Boundary Rate":
+                    setts.rate_bound = val;
+                    break;
+                case "Extra Rate":
+                    setts.rate_extra = val;
+                    break;
+                case "Death Thr":
+                    setts.death_tox_thres = val;
+                    break;
+                case "Tox Prod":
+                    setts.tox_prod = val;
+                    break;
+                case "Detox Intra":
+                    setts.detox_intra = val;
+                    break;
+                case "Detox Extra":
+                    setts.detox_extra = val;
+                    break;
+                case "Insult Conc":
+                    setts.insult_tox = val;
+                    break;
+                case "Insult X":
+                    setts.insult[0] = val;
+                    break;
+                case "Insult Y":
+                    setts.insult[1] = val;
+                    break;
+                case "Insult R":
+                    setts.insult[2] = val;
+                    break;
             }
             return val;
         }
+        /*
+        string[] parameters_name = new string[]
+        {
+            "Repeat",
+            "Nerve Scale",
+
+            "Resolution",
+
+            "Live Rate",
+            "Dead Rate",
+            "Boundary Rate",
+            "Extra Rate",
+            "Death Thr",
+            "Tox Prod",
+
+            "Detox Intra",
+            "Detox Extra",
+
+            "Insult Conc",
+            "Insult X",
+            "Insult Y",
+            "Insult R",
+        };*/
     }
 }

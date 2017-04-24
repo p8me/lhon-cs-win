@@ -162,26 +162,15 @@ namespace LHON_Form
             reset_state();
         }
 
+        // picB.Pain += (s, e) => {...}
         private void picB_Paint(object sender, PaintEventArgs e)
         {
-
             if (!show_axon_order_mdl_gen && axon_lbl != null)
             {
                 // the X on the first axon
                 //var nlbl0 = axon_lbl[first_axon_idx];
                 //SizeF textSize0 = e.Graphics.MeasureString(nlbl0.lbl, this.Font);
                 //e.Graphics.DrawString(nlbl0.lbl, this.Font, Brushes.Beige, nlbl0.x * picB_ratio + picB_offx - (textSize0.Width / 2), nlbl0.y * picB_ratio + picB_offy - (textSize0.Height / 2));
-
-                //if (chk_axons_tox_lvl.Checked)
-                //    for (int i = 0; i < mdl.n_axons; i++)
-                //    {
-                //        var nlbl = axon_lbl[i];
-                //        if (axon_is_large[i] && i != first_axon_idx && nlbl.lbl.Length > 0)
-                //        {
-                //            SizeF textSize = e.Graphics.MeasureString(nlbl.lbl, this.Font);
-                //            e.Graphics.DrawString(nlbl.lbl, this.Font, Brushes.Red, nlbl.x * picB_ratio + picB_offx - (textSize.Width / 2), nlbl.y * picB_ratio + picB_offy - (textSize.Height / 2));
-                //        }
-                //    }
             }
 
             if (show_axon_order_mdl_gen)

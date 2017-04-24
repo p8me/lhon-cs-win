@@ -26,7 +26,7 @@ namespace LHON_Form
     public partial class Main_Form : Form
     {
         volatile GPGPU gpu;
-        bool recompile_cuda = true;
+        bool recompile_cuda = false;
 
         const int max_resident_blocks = 16;
         const int max_resident_threads = 2048;

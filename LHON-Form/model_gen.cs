@@ -33,6 +33,9 @@ namespace LHON_Form
         const float mdl_real_nerve_r = 750; // um
         const int mdl_real_num_axons = 1200000;
 
+        const float mdl_clearance = 0.2F; // um
+        const float mdl_vessel_ratio = 0.1F; // 0 - 1
+
         const float axon_min_r = 0.19F / 2,
                     axon_max_r = 6.87F / 2,
                     axon_min_r_mean = 0.92F / 2,
@@ -123,38 +126,43 @@ namespace LHON_Form
 
         float mdl_nerve_r = 0;
 
+        [Serializable]
         public class Model
         {
             public float nerve_scale_ratio, vessel_ratio, clearance;
-            public float circ_gen_ratio;
 
             public int n_axons;
             public List<float[]> axon_coor;
         }
-
-        /*
-        float sample_radius_obsolete(float x, float y, bool strict_mdl_flg)
+        public void save_mdl(string filePath)
         {
-            float r_mean = axon_min_r_mean + (x + mdl.nerve_r) / (mdl.nerve_r * 2) * (axon_max_r_mean - axon_min_r_mean);
+            var fs = new FileStream(filePath, FileMode.Append, FileAccess.Write);
+            var b = new BinaryWriter(fs);
 
-            if (strict_mdl_flg) return r_mean;
-
-            double alpha = 3;
-            double beta = (r_mean - axon_min_r) / (axon_max_r - axon_min_r) * (alpha - 1);
-            //double nrm_rnd = (1 / Gamma.Sample(alpha, 1 / beta));
-            float r;
-            do
-            {
-                //MathNet.Numerics.Distributions.Normal
-                double samp = InverseGamma.Sample(alpha, beta);
-                //double samp = 1 / Gamma.Sample(alpha, 1 / beta);
-                r = (float)(axon_min_r + samp * (axon_max_r - axon_min_r));
-            }
-            while (r >= axon_max_r);
-
-            return r;
+            b.Write(mdl.nerve_scale_ratio);
+            b.Write(mdl.n_axons);
+            for (int k = 0; k < mdl.n_axons; k++)
+                for (int i = 0; i < 3; i++)
+                    b.Write(mdl.axon_coor[k][i]);
+            fs.Close();
         }
-        */
+        public void load_mdl(string filePath)
+        {
+            var fs = new FileStream(filePath, FileMode.Open);
+            BinaryReader b = new BinaryReader(fs);
+
+            mdl.nerve_scale_ratio = b.ReadSingle();
+            mdl.n_axons = b.ReadInt32();
+            mdl.axon_coor = new List<float[]>();
+            for (int k = 0; k < mdl.n_axons; k++)
+            {
+                float[] coor = new float[3];
+                for (int i = 0; i < 3; i++)
+                    coor[i] = b.ReadSingle();
+                mdl.axon_coor.Add(coor);
+            }
+            fs.Close();
+        }
 
         float x0 = 0, y0 = 0, r, r1 = 0; // in length unit
         float x2 = 0, x1 = 0, y2 = 0, y1 = 0; // in length unit
@@ -180,7 +188,7 @@ namespace LHON_Form
             rc = (int)(r * mdl_resolution);
             rc2 = rc * rc;
 
-            rc_clear = rc + (int)(mdl.clearance * mdl_resolution);
+            rc_clear = rc + (int)(mdl_clearance * mdl_resolution);
             rc_clear2 = (rc_clear - 1) * (rc_clear - 1);
             box_x0 = Max(xc - rc_clear, 0);
             box_y0 = Max(yc - rc_clear, 0);
@@ -234,11 +242,11 @@ namespace LHON_Form
             angle = 0;
 
             float angle_step = 0.08F;
-            float distance_step = mdl.clearance / 2;
+            float distance_step = mdl_clearance / 2;
 
             tic();
 
-            int num_tries = (int)(mdl.circ_gen_ratio * mdl_nerve_r * mdl_nerve_r);
+            int num_tries = (int)(3 * mdl_nerve_r * mdl_nerve_r);
 
             for (int i = 0; i < num_tries; i++)
             {
@@ -250,7 +258,7 @@ namespace LHON_Form
 
                 if (i > 0)
                 {
-                    float dist = r + r1 + mdl.clearance;
+                    float dist = r + r1 + mdl_clearance;
                     x0 = x1 + (float)Math.Cos(angle) * dist;
                     y0 = y1 + (float)Math.Sin(angle) * dist;
 
@@ -326,7 +334,7 @@ namespace LHON_Form
                 float cent_dis = (float)Math.Sqrt(mdl_axons_coor[i][0] * mdl_axons_coor[i][0] +
                     mdl_axons_coor[i][1] * mdl_axons_coor[i][1]);
                 if (cent_dis + mdl_axons_coor[i][2] > mdl_nerve_r) continue;
-                if (cent_dis - mdl_axons_coor[i][2] < mdl.vessel_ratio * mdl_nerve_r) continue;
+                if (cent_dis - mdl_axons_coor[i][2] < mdl_vessel_ratio * mdl_nerve_r) continue;
 
                 mdl.axon_coor.Add(mdl_axons_coor[i]);
                 mdl.n_axons++;
@@ -342,14 +350,40 @@ namespace LHON_Form
                 }
             }
 
-            append_stat("Model Generated in " + (toc() / 1000).ToString("0.0") + " secs\n");
-
-            Debug.WriteLine("model done");
-
-            first_axon_idx = 0;
-            preprocess_model();
-
+            model_id = DateTime.Now.Ticks / 1000;
+            model_is_saved = false;
             sim_stat = sim_stat_enum.None;
+
+            append_stat("Model Generated in " + (toc() / 1000).ToString("0.0") + " secs\n");
+            Debug.WriteLine("model done");
+            update_num_axons_lbl();
+            
+
+            preprocess_model();
         }
     }
 }
+
+/*
+float sample_radius_obsolete(float x, float y, bool strict_mdl_flg)
+{
+    float r_mean = axon_min_r_mean + (x + mdl.nerve_r) / (mdl.nerve_r * 2) * (axon_max_r_mean - axon_min_r_mean);
+
+    if (strict_mdl_flg) return r_mean;
+
+    double alpha = 3;
+    double beta = (r_mean - axon_min_r) / (axon_max_r - axon_min_r) * (alpha - 1);
+    //double nrm_rnd = (1 / Gamma.Sample(alpha, 1 / beta));
+    float r;
+    do
+    {
+        //MathNet.Numerics.Distributions.Normal
+        double samp = InverseGamma.Sample(alpha, beta);
+        //double samp = 1 / Gamma.Sample(alpha, 1 / beta);
+        r = (float)(axon_min_r + samp * (axon_max_r - axon_min_r));
+    }
+    while (r >= axon_max_r);
+
+    return r;
+}
+*/

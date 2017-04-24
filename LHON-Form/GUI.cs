@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using AviFile;
 using System.Drawing.Drawing2D;
-using System.Xml.Serialization;
 using System.IO;
 
 using Cudafy;
@@ -59,6 +58,8 @@ namespace LHON_Form
             InitializeComponent();
             this.CenterToScreen();
             DoubleBuffered = true;
+
+            init_sweep();
 
             chk_show_axons.CheckedChanged += (o, e) => update_show_opts();
             chk_show_tox.CheckedChanged += (o, e) => update_show_opts();
@@ -131,13 +132,10 @@ namespace LHON_Form
                 else chk_save_sw_prog.Text = "Save Sweep";
             };
 
-            chk_save_prog.CheckedChanged += (s, e) =>
+            btn_save_prog.Click += (s, e) =>
             {
-                if (chk_save_prog.Checked) chk_save_prog.Text = "Saving Progress";
-                else chk_save_prog.Text = "Save Progress";
+                Save_Progress(ProjectOutputDir + @"Progression\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".prgim");
             };
-
-            btn_export.Click += (s, e) => Export_model();
 
             append_stat_ln("Welcome to LHON-2D Simulation software!\n");
 
@@ -309,21 +307,21 @@ namespace LHON_Form
         //                               Settings
         // ====================================================================
 
+        bool model_is_saved = false;
+        long model_id = 0;
+
         void init_settings_gui()
         {
+            // Model parameters
             txt_nerve_scale.TextChanged += (s, e) =>
             {
                 mdl.nerve_scale_ratio = read_float(s) / 100F;
                 lbl_nerve_siz.Text = (mdl.nerve_scale_ratio * mdl_real_nerve_r * 2).ToString(".0") + " um";
             };
-            txt_vein_rad.TextChanged += (s, e) => mdl.vessel_ratio = read_float(s) / 100F;
-            txt_clearance.TextChanged += (s, e) => mdl.clearance = read_float(s);
-            txt_circ_gen_ratio.TextChanged += (s, e) => mdl.circ_gen_ratio = read_float(s);
 
-            txt_resolution.TextChanged += (s, e) =>
-            {
-                setts.resolution = read_float(s);
-            };
+            // Preprocess parameters
+
+            txt_resolution.TextChanged += (s, e) => setts.resolution = read_float(s);
 
             txt_detox_extra.TextChanged += (s, e) => setts.detox_extra = read_float(s);
             txt_detox_intra.TextChanged += (s, e) => setts.detox_intra = read_float(s);
@@ -339,13 +337,13 @@ namespace LHON_Form
 
             btn_save_model.Click += (s, e) =>
             {
-                var fil_name = ProjectOutputDir + @"Models\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".mdat";
-                Debug.WriteLine(fil_name);
-
-                FileStream outFile = File.Create(fil_name);
-                XmlSerializer formatter = XmlSerializer.FromTypes(new[] { mdl.GetType() })[0];
-                formatter.Serialize(outFile, mdl);
+                if (model_is_saved) { append_stat_ln("Model is already saved."); return; }
+                if (model_id == 0) { append_stat_ln("Model is not yet generated."); return; }
+                Debug.WriteLine(model_id);
+                var fil_name = ProjectOutputDir + @"Models\" + dec2base(model_id, 36) + " " + (mdl.nerve_scale_ratio * 100).ToString("0") + "%" + ".mdat";
+                save_mdl(fil_name);
                 append_stat_ln("Model saved to " + fil_name);
+                model_is_saved = true;                
             };
 
             btn_load_model.Click += (s, e) =>
@@ -365,13 +363,8 @@ namespace LHON_Form
             btn_save_setts.Click += (s, e) =>
             {
                 var fil_name = ProjectOutputDir + @"Settings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + ".sdat";
-                Debug.WriteLine(fil_name);
-
                 setts.insult = new float[] { insult_x, insult_y, insult_r };
-
-                FileStream outFile = File.Create(fil_name);
-                XmlSerializer formatter = XmlSerializer.FromTypes(new[] { setts.GetType() })[0];
-                formatter.Serialize(outFile, setts);
+                WriteToBinaryFile(fil_name, setts);
                 append_stat_ln("Settings saved to " + fil_name);
             };
 
@@ -388,53 +381,30 @@ namespace LHON_Form
                 if (FD.ShowDialog() != DialogResult.OK) return;
                 load_settings(FD.FileName);
             };
-
         }
 
         void load_model(string path)
         {
             if (!File.Exists(path)) return;
-            //XmlSerializer formatter = new XmlSerializer(mdl.GetType()); // throws an exception during deep debuging
-            // workaround:
-            XmlSerializer formatter = XmlSerializer.FromTypes(new[] { mdl.GetType() })[0];
-            FileStream aFile = new FileStream(path, FileMode.Open);
-            byte[] buffer = new byte[aFile.Length];
-            aFile.Read(buffer, 0, (int)aFile.Length);
-            MemoryStream stream = new MemoryStream(buffer);
-            mdl = (Model)formatter.Deserialize(stream);
-            aFile.Close();
-
+            load_mdl(path);
             update_mdl_and_setts_ui();
-
-            update_bottom_stat("Model Successfully Loaded.");
+            append_stat_ln("Model Successfully Loaded.");
+            model_is_saved = true;
         }
 
         void load_settings(string path)
         {
             if (!File.Exists(path)) return;
-
-            XmlSerializer formatter = XmlSerializer.FromTypes(new[] { setts.GetType() })[0];
-            FileStream aFile = new FileStream(path, FileMode.Open);
-            byte[] buffer = new byte[aFile.Length];
-            aFile.Read(buffer, 0, (int)aFile.Length);
-            MemoryStream stream = new MemoryStream(buffer);
-            setts = (Setts)formatter.Deserialize(stream);
-
+            setts = ReadFromBinaryFile<Setts>(path);
             insult_x = setts.insult[0];
             insult_y = setts.insult[1];
             insult_r = setts.insult[2];
-
-            aFile.Close();
-
             update_mdl_and_setts_ui();
         }
 
         void update_mdl_and_setts_ui()
         {
             txt_nerve_scale.Text = (mdl.nerve_scale_ratio * 100F).ToString();
-            txt_vein_rad.Text = (mdl.vessel_ratio * 100F).ToString();
-            txt_clearance.Text = mdl.clearance.ToString();
-            txt_circ_gen_ratio.Text = mdl.circ_gen_ratio.ToString();
 
             txt_resolution.Text = setts.resolution.ToString();
             txt_detox_extra.Text = setts.detox_extra.ToString();

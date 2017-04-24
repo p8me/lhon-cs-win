@@ -115,7 +115,8 @@ namespace LHON_Form
                 }
 
                 if (sim_stat != sim_stat_enum.Running) break;
-                if (iteration == stop_at_iteration || (stop_at_time > 0 && time >= stop_at_time)) stop_sim(sim_stat_enum.Paused);
+                if (iteration == stop_at_iteration || (stop_at_time > 0 && time >= stop_at_time))
+                    stop_sim(sim_stat_enum.Successful); // >>>>>>>>>>>>>>>>>> TEMP should be Paused
 
                 if (main_loop_delay > 0)
                     Thread.Sleep(main_loop_delay * 10);
@@ -136,32 +137,7 @@ namespace LHON_Form
                 Invoke(new Action(() => reset_state()));
             else
             {
-                // Identify first dying axon
-                //int min_dis = 1000000000;
-                //int iicx = (int)((init_insult[0] + mdl_nerve_r) * setts.resolution + 1);
-                //int iicy = (int)((init_insult[1] + mdl_nerve_r) * setts.resolution + 1);
-                //float min_first_r = float.Parse(txt_min_first_r.Text) * setts.resolution;
-                //for (int i = 0; i < mdl.n_axons; i++)
-                //{
-                //    int dx = (int)axons_coor[i, 0] - iicx;
-                //    int dy = (int)axons_coor[i, 1] - iicy;
-                //    int dis = (dx * dx + dy * dy);
-                //    if (min_dis > dis && axons_coor[i, 2] > min_first_r)
-                //    {
-                //        min_dis = dis;
-                //        first_axon_idx = i;
-                //    }
-                //    axon_is_alive[i] = true;
-                //    death_itr[i] = 0;
-                //}
-
-                //tox = null; tox = (float[,])tox_init.Clone();
-                //rate = null; rate = (float[,,])rate_init.Clone();
-                //detox = null; detox = (float[,])detox_init.Clone();
-                //tox_prod = null; tox_prod = (float[,])tox_prod_init.Clone();
-                //axon_mask = null; axon_mask = (byte[,])axon_mask_init.Clone();
-                //axon_is_alive = null; axon_is_alive = (bool[])axon_is_alive_init.Clone();
-
+                
                 sum_tox = 0;
                 for (int y = 0; y < im_size; y++)
                     for (int x = 0; x < im_size; x++)
@@ -173,7 +149,6 @@ namespace LHON_Form
                 update_gui_labels();
 
                 for (int i = 0; i < mdl.n_axons; i++) axon_lbl[i].lbl = "";
-                //axon_lbl[first_axon_idx].lbl = "X";
 
                 prog_im_siz = prog_im_siz_default;
                 resolution_reduction_ratio = (double)prog_im_siz / (double)im_size;

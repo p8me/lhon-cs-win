@@ -137,7 +137,7 @@ namespace LHON_Form
             axon_is_alive = axon_is_alive_init = Enumerable.Repeat(true, mdl.n_axons).ToArray(); // init to true
 
             // temp variable
-            int max_pixels_in_nerve = (int)(pow2(mdl_nerve_r * res) * (1 - pow2(mdl.vessel_ratio)) * Math.PI);
+            int max_pixels_in_nerve = (int)(pow2(mdl_nerve_r * res) * (1 - pow2(mdl_vessel_ratio)) * Math.PI);
 
             axons_inside_pix = new uint[max_pixels_in_nerve * 3 / 4];
             axons_inside_pix_idx = new uint[mdl.n_axons + 1];
@@ -156,7 +156,7 @@ namespace LHON_Form
             // ======== Local Constants =========
             int nerve_cent_pix = im_size / 2;
             int nerve_r_pix = (int)(mdl_nerve_r * res);
-            int vein_r_pix = (int)(mdl.vessel_ratio * mdl_nerve_r * res);
+            int vein_r_pix = (int)(mdl_vessel_ratio * mdl_nerve_r * res);
 
             int nerve_r_pix_2 = pow2(nerve_r_pix);
             int vein_r_pix_2 = pow2(vein_r_pix);
@@ -289,11 +289,7 @@ namespace LHON_Form
             gpu.CopyFromDevice(rate_dev, rate);
 
             prep_prof.time(6);
-
-            //areal_progress_lim = 0;
-            //int temp = 0;
-            //areal_progress_lim = areal_progress_lim / temp * 0.7F;
-
+            
             // Keep backup of inital state 
 
             //tox_init = null; tox_init = (float[,])tox.Clone();
@@ -304,8 +300,9 @@ namespace LHON_Form
             //axon_is_alive_init = null; axon_is_alive_init = (bool[])axon_is_alive.Clone();
 
             reset_state();
-
-            //((rate.Length + tox.Length + detox.Length + tox_prod.Length + axon_mask.Length + axon_is_alive.Length)*4)/1024/1024
+            
+            // variable size study
+            //((rate.Length + tox.Length + detox.Length + tox_prod.Length + axon_mask.Length + axon_is_alive.Length)*4)/1024/1024 // MB
 
             update_bottom_stat("Preprocess Done! (" + (toc() / 1000).ToString("0.0") + " secs)");
             // Debug.WriteLine("inside: {0} vs allocated {1}", axons_inside_pix_idx[mdl.n_axons - 1], axons_inside_pix.Length);

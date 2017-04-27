@@ -26,7 +26,7 @@ using MathNet.Numerics.Distributions;
 
 namespace LHON_Form
 {
-    [System.ComponentModel.DesignerCategory("Code")]
+    //[System.ComponentModel.DesignerCategory("Form")]
     public partial class Main_Form : Form
     {
         int gui_iteration_period;
@@ -85,7 +85,7 @@ namespace LHON_Form
 
                 alg_prof.time(-1);
 
-                gpu.Launch(blocks_per_grid_1D_axons, threads_per_block_1D).cuda_update_live(mdl.n_axons, tox_dev, rate_dev, detox_dev, tox_prod_dev, k_rate_dead_axon, k_detox_extra, death_tox_thres,
+                gpu.Launch(blocks_per_grid_1D_axons, threads_per_block_1D).cuda_update_live(mdl.n_axons, tox_dev, rate_dev, detox_dev, tox_prod_dev, on_death_tox, k_rate_dead_axon, k_detox_extra, death_tox_thres,
                     axons_cent_pix_dev, axons_inside_pix_dev, axons_inside_pix_idx_dev, axon_surr_rate_dev, axon_surr_rate_idx_dev,
                     axon_is_alive_dev, axon_mask_dev, num_alive_axons_dev, death_itr_dev, iteration);
                 if (en_prof) { gpu.Synchronize(); alg_prof.time(1); }

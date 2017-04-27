@@ -29,7 +29,7 @@ namespace LHON_Form
             micromol / um^2 = (CONSTANT * resolution ^ 2) * tox / pix
         */
 
-        float k_detox_intra, k_detox_extra, k_tox_prod, death_tox_thres, insult_tox,
+        float k_detox_intra, k_detox_extra, k_tox_prod, death_tox_thres, insult_tox, on_death_tox,
             k_rate_live_axon, k_rate_boundary, k_rate_dead_axon, k_rate_extra;
 
 
@@ -109,8 +109,11 @@ namespace LHON_Form
             k_rate_boundary = setts.rate_bound / 5F * rate_and_detox_conv;
             k_rate_dead_axon = setts.rate_dead / 5F * rate_and_detox_conv;
             k_rate_extra = setts.rate_extra / 5F * rate_and_detox_conv;
+
+            // 
             death_tox_thres = setts.death_tox_thres * rate_and_detox_conv;
             insult_tox = setts.insult_tox * rate_and_detox_conv;
+            on_death_tox = setts.on_death_tox * rate_and_detox_conv;
 
             prep_prof.time(0);
             tic();

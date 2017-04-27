@@ -33,7 +33,7 @@ namespace LHON_Form
         const float mdl_real_nerve_r = 750; // um
         const int mdl_real_num_axons = 1200000;
 
-        const float mdl_clearance = 0.2F; // um
+        float mdl_clearance = 0.4F; // um
         const float mdl_vessel_ratio = 0.1F; // 0 - 1
 
         const float axon_min_r = 0.19F / 2,

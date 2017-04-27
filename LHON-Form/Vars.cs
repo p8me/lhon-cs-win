@@ -68,8 +68,10 @@ namespace LHON_Form
             public float rate_dead;
             public float rate_bound;
             public float rate_extra;
-
+            
             public float tox_prod;
+            public float on_death_tox;
+
             public float detox_intra;
             public float detox_extra;
 

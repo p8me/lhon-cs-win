@@ -332,7 +332,10 @@ namespace LHON_Form
             txt_rate_live.TextChanged += (s, e) => setts.rate_live = read_float(s);
             txt_tox_prod_rate.TextChanged += (s, e) => setts.tox_prod = read_float(s);
             txt_death_tox_threshold.TextChanged += (s, e) => setts.death_tox_thres = read_float(s);
-            txt_insult_concent.TextChanged += (s, e) => setts.insult_tox = read_float(s);
+            txt_insult_tox.TextChanged += (s, e) => setts.insult_tox = read_float(s);
+            txt_on_death_tox.TextChanged += (s, e) => setts.on_death_tox = read_float(s);
+
+            txt_clearance.TextChanged += (s, e) => mdl_clearance = read_float(s);
 
 
             btn_save_model.Click += (s, e) =>
@@ -417,7 +420,10 @@ namespace LHON_Form
 
             txt_tox_prod_rate.Text = setts.tox_prod.ToString();
             txt_death_tox_threshold.Text = setts.death_tox_thres.ToString();
-            txt_insult_concent.Text = setts.insult_tox.ToString();
+            txt_insult_tox.Text = setts.insult_tox.ToString();
+            txt_on_death_tox.Text = setts.on_death_tox.ToString();
+
+            txt_clearance.Text = mdl_clearance.ToString();
 
             update_num_axons_lbl();
         }

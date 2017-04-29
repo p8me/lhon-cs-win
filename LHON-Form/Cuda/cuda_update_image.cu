@@ -5,11 +5,11 @@ extern "C" __global__  void cuda_update_image(unsigned short im_size, unsigned s
 	int x_bmp = blockIdx.x * blockDim.x + threadIdx.x;
 	int y_bmp = blockIdx.y * blockDim.y + threadIdx.y;
 
-	if (x_bmp < bmp_im_size && y_bmp < bmp_im_size) {
+	if (x_bmp < bmp_im_size && y_bmp > 0) {
 
 		int xy_bmp = x_bmp * bmp_im_size + y_bmp;
 		int xy4_bmp = xy_bmp * 4;
-		int xy = (int)((float)x_bmp * bmp_image_compression_ratio) * im_size + (int)((float)y_bmp * bmp_image_compression_ratio);
+		int xy = (int)((float)y_bmp * bmp_image_compression_ratio) * im_size + (int)((float)(bmp_im_size - x_bmp) * bmp_image_compression_ratio);
 
 		unsigned char red = 0, green = 0, blue = 0;
 		float tmp = tox[xy] / death_tox_thres;

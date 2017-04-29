@@ -106,23 +106,26 @@ namespace LHON_Form
             {
                 if (chk_rec_avi.Checked)
                 {
-                    chk_rec_avi.Text = "Recoding AVI";
-                    avi_file = ProjectOutputDir + @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + '(' + (im_size * im_size / 1e6).ToString("0.0") + "Mpix).avi";
-                    aviManager = new AviManager(avi_file, false);
-                    Avi.AVICOMPRESSOPTIONS options = new Avi.AVICOMPRESSOPTIONS();
-                    options.fccType = (uint)Avi.mmioStringToFOURCC("vids", 5);
-                    options.fccHandler = (uint)Avi.mmioStringToFOURCC("CVID", 5);
+                    chk_rec_avi.Text = "Recodinging";
+                    //avi_file = ProjectOutputDir + @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + '(' + (im_size * im_size / 1e6).ToString("0.0") + "Mpix).avi";
+                    //aviManager = new AviManager(avi_file, false);
+                    //Avi.AVICOMPRESSOPTIONS options = new Avi.AVICOMPRESSOPTIONS();
+                    //options.fccType = (uint)Avi.mmioStringToFOURCC("vids", 5);
+                    //options.fccHandler = (uint)Avi.mmioStringToFOURCC("CVID", 5);
                     //options.dwQuality = 1;
-                    aviStream = aviManager.AddVideoStream(options, 10, bmp);
+                    //aviStream = aviManager.AddVideoStream(options, 10, bmp);
                 }
                 else
                 {
-                    chk_rec_avi.Text = "Record AVI";
-                    aviManager.Close();
-                    Process.Start(avi_file);
-                    var path = ProjectOutputDir + @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + '(' + (im_size * im_size / 1e6).ToString("0.0") + "Mpix).gif";
-                    using (FileStream fs = new FileStream(path, FileMode.Create))
-                        gifEnc.Save(fs);
+                    chk_rec_avi.Text = "Record";
+                    //aviManager.Close();
+                    //Process.Start(avi_file);
+                    if (gifEnc.Frames.Count > 0)
+                    {
+                        var path = ProjectOutputDir + @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + '(' + (im_size * im_size / 1e6).ToString("0.0") + "Mpix).gif";
+                        using (FileStream fs = new FileStream(path, FileMode.Create))
+                            gifEnc.Save(fs);
+                    }
                 }
             };
 
@@ -159,7 +162,7 @@ namespace LHON_Form
                     if (insult_r < 0) insult_r = 0;
                     update_init_insult();
                     update_bmp_image();
-                    Debug.WriteLine(insult_r);
+                    //Debug.WriteLine(insult_r);
                 }
             };
             picB.Click += (s, e) => mouse_click(e as MouseEventArgs);

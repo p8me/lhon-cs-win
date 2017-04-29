@@ -26,7 +26,7 @@ namespace LHON_Form
 {
     public partial class Main_Form : Form
     {
-        ushort bmp_im_size = 512; // will be rounded to a multiple of threads_per_block_bmp
+        ushort bmp_im_size = 1024; // will be rounded to a multiple of threads_per_block_bmp
 
         int threads_per_block_bmp_1D = 32;
 
@@ -78,22 +78,27 @@ namespace LHON_Form
                     bmp_bytes_dev, tox_dev, axon_mask_dev, init_insult_mask_dev, death_tox_thres, show_opts_dev);
 
                 gpu.CopyFromDevice(bmp_bytes_dev, bmp_bytes);
-                // gpu.CopyFromDevice(tox_dev, tox);
 
                 fixed (byte* dat = &bmp_bytes[0, 0, 0])
                     CopyMemory(bmp_scan0, (IntPtr)dat, (uint)bmp_bytes.Length);
                 picB.Image = bmp;
 
-                if (sim_stat == sim_stat_enum.Running && chk_rec_avi.Checked)
-                {
-                    // AVI:
-                    //aviStream.AddFrame((Bitmap)bmp.Clone());
-                    // GIF:
-                    var bmh = bmp.GetHbitmap();
-                    var opts = BitmapSizeOptions.FromWidthAndHeight(200, 200);
-                    var src = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(bmh, IntPtr.Zero, System.Windows.Int32Rect.Empty, opts);
-                    gifEnc.Frames.Add(BitmapFrame.Create(src));
-                }
+            }
+        }
+
+        void record_bmp_gif()
+        {
+            if (InvokeRequired)
+                Invoke(new Action(() => record_bmp_gif()));
+            else
+            {
+                // AVI:
+                //aviStream.AddFrame((Bitmap)bmp.Clone());
+                // GIF:
+                var bmh = bmp.GetHbitmap();
+                var opts = BitmapSizeOptions.FromWidthAndHeight(bmp_im_size, bmp_im_size);
+                var src = System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(bmh, IntPtr.Zero, System.Windows.Int32Rect.Empty, opts);
+                gifEnc.Frames.Add(BitmapFrame.Create(src));
             }
         }
 
@@ -101,8 +106,8 @@ namespace LHON_Form
 
         void update_init_insult()
         {
-            int insult_x_p = (int)(insult_x * setts.resolution / bmp_image_compression_ratio) + bmp_im_size / 2;
-            int insult_y_p = (int)(insult_y * setts.resolution / bmp_image_compression_ratio) + bmp_im_size / 2;
+            int insult_x_p = bmp_im_size - ((int)(insult_y * setts.resolution / bmp_image_compression_ratio) + bmp_im_size / 2);
+            int insult_y_p = (int)(insult_x * setts.resolution / bmp_image_compression_ratio) + bmp_im_size / 2;
             int insult_r2_p = (int)(pow2(insult_r * setts.resolution / bmp_image_compression_ratio));
 
             gpu.Launch(update_bmp_gride_size_2D, update_bmp_block_size_2D).cuda_update_init_insult(
@@ -142,8 +147,8 @@ namespace LHON_Form
             if (x >= 0 && x < im_size && y >= 0 && y < im_size)
             {
                 // Sets the initial insult location
-                um[1] = (float)(x - 1) / setts.resolution - mdl_nerve_r;
-                um[0] = (float)(y - 1) / setts.resolution - mdl_nerve_r;
+                um[1] = (float)(im_size - y - 1) / setts.resolution - mdl_nerve_r;
+                um[0] = (float)(x - 1) / setts.resolution - mdl_nerve_r;
             }
             return um;
         }

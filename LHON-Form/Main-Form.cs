@@ -29,7 +29,6 @@ namespace LHON_Form
     //[System.ComponentModel.DesignerCategory("Form")]
     public partial class Main_Form : Form
     {
-        int gui_iteration_period;
 
         private void Main_Form_Load(object sender, EventArgs e)
         {
@@ -62,10 +61,10 @@ namespace LHON_Form
 
         unsafe private void Run_Alg_GPU()
         {
-            gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId); // should be reloaded for reliability 
+            gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId); // should be reloaded for reliability
             alg_prof.time(0);
 
-            gui_iteration_period = 10; // should be function of im_siz
+            int gui_iteration_period = 10;
 
             if (iteration == 0)
             {
@@ -73,6 +72,7 @@ namespace LHON_Form
                 tt_sim.restart();
                 tic();
                 dt = 1F / pow2(setts.resolution);
+                gui_iteration_period = (int)(read_float(txt_rec_inerval)/dt);
             }
             tt_sim.start();
 
@@ -110,6 +110,9 @@ namespace LHON_Form
                     if (en_prof) { gpu.Synchronize(); alg_prof.time(3); }
 
                     update_bmp_image();
+
+                    if (sim_stat == sim_stat_enum.Running && chk_rec_avi.Checked)
+                        record_bmp_gif();
 
                     if (en_prof) alg_prof.time(4);
                 }

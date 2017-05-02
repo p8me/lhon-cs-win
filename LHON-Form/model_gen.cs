@@ -33,7 +33,7 @@ namespace LHON_Form
         const float mdl_real_nerve_r = 750; // um
         const int mdl_real_num_axons = 1200000;
 
-        float mdl_clearance = 0.4F; // um
+        float mdl_clearance = 0.2F; // um
         const float mdl_vessel_ratio = 0.1F; // 0 - 1
 
         const float axon_min_r = 0.19F / 2,
@@ -151,6 +151,9 @@ namespace LHON_Form
             var fs = new FileStream(filePath, FileMode.Open);
             BinaryReader b = new BinaryReader(fs);
 
+            model_id = B36toDec(Path.GetFileName(filePath).Split(' ')[0]);
+            Debug.WriteLine(model_id);
+            
             mdl.nerve_scale_ratio = b.ReadSingle();
             mdl.n_axons = b.ReadInt32();
             mdl.axon_coor = new List<float[]>();

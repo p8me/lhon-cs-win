@@ -37,7 +37,7 @@ namespace LHON_Form
         //              Variables
         // ====================================
 
-        float[,] tox, tox_init, tox_dev; // Tox
+        float[,] tox, tox_init, tox_dev, tox_new_dev; // Tox
         float[,,] rate, rate_init, rate_dev; // Rate
         float[,] detox, detox_init, detox_dev; // Detox
         float[,] tox_prod, tox_prod_init, tox_prod_dev; // Tox_prod
@@ -73,47 +73,44 @@ namespace LHON_Form
         // Requires full Model info and assigns tox, rate, etc
         private void preprocess_model()
         {
+            
+
+            
+            // =======================================
+            //              Init Parameters
+            // =======================================
+
             float res = setts.resolution;
-
-            if (mdl.n_axons == 0)
-            {
-                append_stat_ln("No axons in the model! Preprocess aborted.");
-                return;
-            }
-
-            if (res < min_res)
-            {
-                append_stat_ln("Resolution cannot be less than min_res = " + min_res.ToString());
-                return;
-            }
-
-            // =======================================
-            //              Init constants
-            // =======================================
-
             mdl_nerve_r = mdl.nerve_scale_ratio * mdl_real_nerve_r;
 
-            float res2_fact = pow2(res / min_res);
-            float rate_and_detox_conv = 1F / res2_fact;
-            float tox_prod_conv = 1F / pow2(res2_fact);
+            float rate_conv = pow2(res / min_res);
+            float temp = 1F / rate_conv;
+            if (setts.rate_live > temp ||
+                setts.rate_bound > temp ||
+                setts.rate_dead > temp ||
+                setts.rate_extra > temp)
+            {
+                append_stat_ln("Bad diffusion rate (>0.2)! Increase min_res. Preprocess aborted.");
+                return;
+            }
 
             // "setts" are user input with physical units
 
             // 1 - real detox rate to reduce computation ->  tox[x_y] *= detox[x_y]
-            k_detox_intra = 1F - setts.detox_intra * rate_and_detox_conv;
-            k_detox_extra = 1F - setts.detox_extra * rate_and_detox_conv;
-            k_tox_prod = setts.tox_prod * tox_prod_conv;
+            k_detox_intra = 1F - setts.detox_intra;
+            k_detox_extra = 1F - setts.detox_extra;
+            k_tox_prod = setts.tox_prod;
 
             // User inputs 0 to 1 for rate values 
-            k_rate_live_axon = setts.rate_live / 5F * rate_and_detox_conv;
-            k_rate_boundary = setts.rate_bound / 5F * rate_and_detox_conv;
-            k_rate_dead_axon = setts.rate_dead / 5F * rate_and_detox_conv;
-            k_rate_extra = setts.rate_extra / 5F * rate_and_detox_conv;
+            k_rate_live_axon = setts.rate_live / 5F * rate_conv;
+            k_rate_boundary = setts.rate_bound / 5F * rate_conv;
+            k_rate_dead_axon = setts.rate_dead / 5F * rate_conv;
+            k_rate_extra = setts.rate_extra / 5F * rate_conv;
 
             // 
-            death_tox_thres = setts.death_tox_thres * rate_and_detox_conv;
-            insult_tox = setts.insult_tox * rate_and_detox_conv;
-            on_death_tox = setts.on_death_tox * rate_and_detox_conv;
+            death_tox_thres = setts.death_tox_thres;
+            insult_tox = setts.insult_tox;
+            on_death_tox = setts.on_death_tox;
 
             prep_prof.time(0);
             tic();
@@ -208,7 +205,7 @@ namespace LHON_Form
                 box_siz_x = new int[mdl.n_axons],
                 box_siz_y = new int[mdl.n_axons];
 
-            
+
             for (int i = 0; i < mdl.n_axons; i++)
             {
                 axon_is_large[i] = mdl.axon_coor[i][2] > axon_max_r_mean;
@@ -239,7 +236,7 @@ namespace LHON_Form
             {
                 bool[,] is_inside_this_axon = new bool[box_siz_x[i], box_siz_y[i]];
                 axons_inside_pix_idx[i + 1] = axons_inside_pix_idx[i];
-                
+
                 for (int y = box_y_min[i]; y <= box_y_max[i]; y++)
                     for (int x = box_x_min[i]; x <= box_x_max[i]; x++)
                     {
@@ -292,7 +289,7 @@ namespace LHON_Form
             gpu.CopyFromDevice(rate_dev, rate);
 
             prep_prof.time(6);
-            
+
             // Keep backup of inital state 
 
             //tox_init = null; tox_init = (float[,])tox.Clone();
@@ -303,7 +300,7 @@ namespace LHON_Form
             //axon_is_alive_init = null; axon_is_alive_init = (bool[])axon_is_alive.Clone();
 
             reset_state();
-            
+
             // variable size study
             //((rate.Length + tox.Length + detox.Length + tox_prod.Length + axon_mask.Length + axon_is_alive.Length)*4)/1024/1024 // MB
 

@@ -164,7 +164,8 @@ namespace LHON_Form
 
             Debug.WriteLine(insult_x + "  " + insult_y);
 
-            reset_state();
+            preprocess_model();
+            //reset_state();
         }
 
         // picB.Pain += (s, e) => {...}

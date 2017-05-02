@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows.Forms;
 using AviFile;
-
+using System.Linq;
 
 namespace LHON_Form
 {
@@ -201,19 +201,34 @@ namespace LHON_Form
             }
         }
 
-        public static string dec2base(long value, long toBase)
+        const string CharList = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+        public static string Dec2B36(long value)
         {
             string result = string.Empty;
             do
             {
-                int rem = (int)(value % toBase);
-                result = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"[rem] + result;
-                value /= toBase;
+                int rem = (int)(value % 36);
+                result = CharList[rem] + result;
+                value /= 36;
             }
             while (value > 0);
 
             return result;
         }
 
+        public static long B36toDec(string input)
+        {
+            var reversed = input.Reverse();
+            long result = 0;
+            int pos = 0;
+            foreach (char c in reversed)
+            {
+                result += CharList.IndexOf(c) * (long)Math.Pow(36, pos);
+                pos++;
+            }
+            return result;
+        }
+        
     }
 }

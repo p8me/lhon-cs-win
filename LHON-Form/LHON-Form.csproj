@@ -96,17 +96,35 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="bmp_image.cs" />
-    <Compile Include="GPU.cs" />
-    <Compile Include="file_interface.cs" />
+    <Compile Include="bmp_image.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="GPU.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="file_interface.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="GlobalSuppressions.cs" />
-    <Compile Include="GUI.cs" />
-    <Compile Include="model_gen.cs" />
-    <Compile Include="preprocess.cs" />
+    <Compile Include="GUI.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="model_gen.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="preprocess.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="progression.cs" />
-    <Compile Include="sweep.cs" />
-    <Compile Include="Vars.cs" />
-    <Compile Include="Main-Form.cs" />
+    <Compile Include="sweep.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Vars.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Main-Form.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Main-Form.Designer.cs">
       <DependentUpon>Main-Form.cs</DependentUpon>
     </Compile>

@@ -70,6 +70,91 @@ namespace LHON_Form
 
         private void Save_Progress(string progression_fil_name)
         {
+            float[] Dia = new float[mdl.n_axons];
+            for (int a = 0; a < mdl.n_axons; a++)
+                Dia[a] = mdl.axon_coor[a][2];
+
+            var sorted = Dia.Select((x, i) => new KeyValuePair<float, int>(x, i)).OrderBy(x => x.Key).ToList();
+
+            List<float> DiaSorted = sorted.Select(x => x.Key).ToList();
+            List<int> SortIdx = sorted.Select(x => x.Value).ToList();
+
+            float medium_large_thrs = DiaSorted[2 * mdl.n_axons / 3];
+            float small_medium_thrs = DiaSorted[mdl.n_axons / 3];
+            int every_itr = 50;
+
+            int[] size_idx = new int[mdl.n_axons];
+            int[] n_axons = new int[3];
+
+            float sum_rad_alive = 0;
+
+            for (int a = 0; a < mdl.n_axons; a++)
+            {
+                float r = mdl.axon_coor[a][2];
+                if (r < small_medium_thrs) { size_idx[a] = 0; n_axons[0]++; }
+                else if (r > medium_large_thrs) { size_idx[a] = 2; n_axons[2]++; }
+                else { size_idx[a] = 1; n_axons[1]++; }
+                sum_rad_alive += r;
+            }
+
+            // Death iteration
+            gpu.CopyFromDevice(death_itr_dev, death_itr);
+
+            int[,] alive = new int[iteration, 3];
+            int[,] dead = new int[iteration, 3];
+            float[] mean_dia_dead = new float[iteration];
+            float[] mean_dia_alive = new float[iteration];
+
+            float sum_rad_dead = 0;
+
+            for (int i = 1; i < iteration; i++)
+            {
+                for (int j = 0; j < 3; j++)
+                    dead[i, j] = dead[i - 1, j];
+
+                mean_dia_alive[i] = mean_dia_alive[i - 1];
+                mean_dia_dead[i] = mean_dia_dead[i - 1];
+
+                for (int a = 0; a < mdl.n_axons; a++)
+                    if (i == death_itr[a])
+                    {
+                        int j = size_idx[a];
+                        dead[i, j]++;
+                        float r = mdl.axon_coor[a][2];
+                        sum_rad_alive -= r;
+                        sum_rad_dead += r;
+                        mean_dia_alive[i] = sum_rad_alive / (n_axons[j] - dead[i, j]);
+                        mean_dia_dead[i] = sum_rad_dead / dead[i, j];
+                    }
+
+                for (int j = 0; j < 3; j++)
+                    alive[i, j] = n_axons[j] - dead[i, j];
+            }
+
+            string timeStr = DateTime.Now.ToString("yyyy - MM - dd @HH - mm - ss");
+            string path = ProjectOutputDir + @"Exported\" + timeStr + ".csv";
+            using (StreamWriter file = new StreamWriter(path, true))
+            {
+
+                file.WriteLine("Iteration, Small_Alive, Small_Dead, Medium_Alive, Medium_Dead, Large_Alive, Large_Dead, Mean_Diameter_Alive, Mean_Diameter_Dead");
+
+                for (int i = 1; i < iteration; i += every_itr)
+                {
+                    file.Write("{0}, ", i);
+                    for (int j = 0; j < 3; j++)
+                        file.Write("{0}, {1}, ", alive[i, j], dead[i, j]);
+                    file.Write("{0}, {1}\n", mean_dia_alive[i] * 2, mean_dia_dead[i] * 2);
+                }
+            }
+            append_stat_ln("Model exported to " + path);
+            path = ProjectOutputDir + @"Exported\" + timeStr + ".txt";
+            using (StreamWriter file = new StreamWriter(path, true))
+            {
+                file.WriteLine("Scale = {0}, Clearance = {1}", mdl.nerve_scale_ratio, mdl_clearance);
+                file.WriteLine("resolution = {0}, rate_live = {1}, rate_dead = {2}, rate_bound = {3}, rate_extra = {4}", setts.resolution, setts.rate_live, setts.rate_dead, setts.rate_bound, setts.rate_extra);
+                file.WriteLine("tox_prod = {0}, detox_intra = {1}, detox_extra = {2}, death_tox_thres = {3}", setts.tox_prod, setts.detox_intra, setts.detox_extra, setts.death_tox_thres);
+            }
+            /*
             using (FileStream fileStream = new FileStream(progression_fil_name, FileMode.Append, FileAccess.Write, FileShare.None))
             {
                 using (BinaryWriter writer = new BinaryWriter(fileStream))
@@ -79,7 +164,7 @@ namespace LHON_Form
                     writer.Write(model_id);
 
                     // Setts
-                    writer.Write(setts.resolution); 
+                    writer.Write(setts.resolution);
 
                     writer.Write(setts.rate_live);
                     writer.Write(setts.rate_dead);
@@ -98,17 +183,15 @@ namespace LHON_Form
 
                     writer.Write(setts.insult_tox);
 
-                    // Death iteration
-                    gpu.CopyFromDevice(death_itr_dev, death_itr);
-
                     for (int m = 0; m < mdl.n_axons; m++)
                         writer.Write(death_itr[m]);
-                    
+
                     writer.Flush();
 
                     append_stat_ln("Sim Progress saved to " + progression_fil_name);
                 }
             }
+            */
         }
 
         // ====================== Binary reader . writer
@@ -129,8 +212,8 @@ namespace LHON_Form
                 return (T)binaryFormatter.Deserialize(stream);
             }
         }
-        
-        
+
+
         // ====================== Matlab Interface
 
         void Export_model() // no death info, text file

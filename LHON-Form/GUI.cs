@@ -95,7 +95,15 @@ namespace LHON_Form
 
             btn_redraw.Click += (s, e) => { if (sim_stat != sim_stat_enum.Running && !new_model_worker.IsBusy) new_model_worker.RunWorkerAsync(); };
 
-            btn_preprocess.Click += (s, e) => preprocess_model();
+            btn_preprocess.Click += (s, e) =>
+            {
+                if (sim_stat == sim_stat_enum.Running)
+                {
+                    append_stat_ln("You must stop the simulation before preprogress.\n");
+                    return;
+                }
+                preprocess_model();
+            };
 
             btn_clr.Click += (s, e) => txt_status.Text = "";
 
@@ -106,7 +114,7 @@ namespace LHON_Form
             {
                 if (chk_rec_avi.Checked)
                 {
-                    chk_rec_avi.Text = "Recodinging";
+                    chk_rec_avi.Text = "Recording";
                     //avi_file = ProjectOutputDir + @"Recordings\" + DateTime.Now.ToString("yyyy-MM-dd @HH-mm-ss") + '(' + (im_size * im_size / 1e6).ToString("0.0") + "Mpix).avi";
                     //aviManager = new AviManager(avi_file, false);
                     //Avi.AVICOMPRESSOPTIONS options = new Avi.AVICOMPRESSOPTIONS();
@@ -258,8 +266,8 @@ namespace LHON_Form
 
         void append_stat(string s)
         {
-            if (InvokeRequired) Invoke(new Action(() => txt_status.AppendText(s.Replace("\n", Environment.NewLine))));
-            else txt_status.AppendText(s);
+            if (InvokeRequired) Invoke(new Action(() => append_stat(s)));
+            else txt_status.AppendText(s.Replace("\n", Environment.NewLine));
         }
 
         void append_stat_ln(string s) { append_stat(s + Environment.NewLine); }
@@ -271,22 +279,23 @@ namespace LHON_Form
         {
             Invoke(new Action(() =>
             {
+                float now = tt_sim.read();
                 lbl_itr.Text = iteration.ToString("0");
                 lbl_tox.Text = (sum_tox / 1000000).ToString("0.00") + " Mol";
                 lbl_real_time.Text = time.ToString("0.0");
                 lbl_alive_axons_perc.Text = ((float)num_alive_axons[0] * 100 / mdl.n_axons).ToString("0.0") + "%";
-                var span = TimeSpan.FromSeconds(tt_sim.read() / 1000);
+                var span = TimeSpan.FromSeconds(now / 1000);
                 lbl_sim_time.Text = string.Format("{0:00}:{1:00}:{2:00}", span.Minutes, span.Seconds, span.Milliseconds);
 
                 float itr_p_s = 0;
                 if (sim_stat == sim_stat_enum.Running)
                 {
-                    if (prev_itr == 0)
-                        itr_p_s = iteration / tt_sim.read() * 1000;
+                    if (iteration < prev_itr || now < prev_itr_t)
+                        itr_p_s = iteration / now * 1000;
                     else
-                        itr_p_s = (iteration - prev_itr) / (tt_sim.read() - prev_itr_t) * 1000;
+                        itr_p_s = (iteration - prev_itr) / (now - prev_itr_t) * 1000;
 
-                    prev_itr_t = tt_sim.read();
+                    prev_itr_t = now;
                     prev_itr = iteration;
                 }
 
@@ -346,7 +355,7 @@ namespace LHON_Form
                 if (model_is_saved) { append_stat_ln("Model is already saved."); return; }
                 if (model_id == 0) { append_stat_ln("Model is not yet generated."); return; }
                 Debug.WriteLine(model_id);
-                var fil_name = ProjectOutputDir + @"Models\" + dec2base(model_id, 36) + " " + (mdl.nerve_scale_ratio * 100).ToString("0") + "%" + ".mdat";
+                var fil_name = ProjectOutputDir + @"Models\" + Dec2B36(model_id) + " " + (mdl.nerve_scale_ratio * 100).ToString("0") + "%" + ".mdat";
                 save_mdl(fil_name);
                 append_stat_ln("Model saved to " + fil_name);
                 model_is_saved = true;                

@@ -59,6 +59,10 @@ namespace LHON_Form
         bool en_prof = false;
         float dt;
 
+        float lvl_tox_last = 0;
+        int duration_of_no_change = 0; // itr
+        int stop_sim_at_duration_of_no_change = 2000; // itr
+
         unsafe private void Run_Alg_GPU()
         {
             gpu = CudafyHost.GetDevice(CudafyModes.Target, CudafyModes.DeviceId); // should be reloaded for reliability
@@ -72,7 +76,7 @@ namespace LHON_Form
                 tt_sim.restart();
                 tic();
                 dt = 1F / pow2(setts.resolution);
-                gui_iteration_period = (int)(read_float(txt_rec_inerval)/dt);
+                gui_iteration_period = read_int(txt_rec_inerval);
             }
             tt_sim.start();
 
@@ -90,8 +94,10 @@ namespace LHON_Form
                     axon_is_alive_dev, axon_mask_dev, num_alive_axons_dev, death_itr_dev, iteration);
                 if (en_prof) { gpu.Synchronize(); alg_prof.time(1); }
 
-                gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_diffusion(pix_idx_dev, pix_idx_num, im_size,
-                    tox_dev, rate_dev, detox_dev, tox_prod_dev);
+                gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_diffusion1(pix_idx_dev, pix_idx_num, im_size,
+                    tox_new_dev, tox_dev, rate_dev, detox_dev, tox_prod_dev);
+
+                gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_diffusion2(pix_idx_dev, pix_idx_num, tox_new_dev, tox_dev);
 
                 if (en_prof) { gpu.Synchronize(); alg_prof.time(2); }
 
@@ -99,11 +105,23 @@ namespace LHON_Form
                 {
                     //gpu.CopyFromDevice(axon_is_alive_dev, axon_is_alive); // ?
                     gpu.CopyFromDevice(num_alive_axons_dev, num_alive_axons);
-
+                    
                     // Calc tox_sum for sanity check
                     gpu.Set(sum_tox_dev);
                     gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_tox_sum(pix_idx_dev, pix_idx_num, tox_dev, sum_tox_dev);
                     gpu.CopyFromDevice(sum_tox_dev, out sum_tox);
+
+                    if (Math.Abs(sum_tox - lvl_tox_last) > 0.01F * 1000000F)
+                    {
+                        duration_of_no_change = 0;
+                        lvl_tox_last = sum_tox;
+                    }
+                    else
+                    {
+                        duration_of_no_change += gui_iteration_period;
+                        if (duration_of_no_change >= stop_sim_at_duration_of_no_change)
+                            stop_sim(sim_stat_enum.Successful);
+                    }
 
                     update_gui_labels();
 
@@ -140,7 +158,6 @@ namespace LHON_Form
                 Invoke(new Action(() => reset_state()));
             else
             {
-                
                 sum_tox = 0;
                 for (int y = 0; y < im_size; y++)
                     for (int x = 0; x < im_size; x++)
@@ -180,6 +197,6 @@ namespace LHON_Form
 
             }
         }
-        
+
     }
 }

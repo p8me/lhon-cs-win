@@ -76,6 +76,8 @@ namespace LHON_Form
             gpu.FreeAll(); gpu.Synchronize();
 
             tox_dev = gpu.Allocate(tox); gpu.CopyToDevice(tox, tox_dev);
+            tox_new_dev = gpu.Allocate(tox); gpu.Set(tox_new_dev);
+
             rate_dev = gpu.Allocate(rate); gpu.CopyToDevice(rate, rate_dev);
             detox_dev = gpu.Allocate(detox); gpu.CopyToDevice(detox, detox_dev);
             tox_prod_dev = gpu.Allocate(tox_prod); gpu.CopyToDevice(tox_prod, tox_prod_dev);
@@ -139,7 +141,9 @@ namespace LHON_Form
         [CudafyDummy]
         public static void cuda_update_live() { }
         [CudafyDummy]
-        public static void cuda_diffusion() { }
+        public static void cuda_diffusion1() { }
+        [CudafyDummy]
+        public static void cuda_diffusion2() { }
         [CudafyDummy]
         public static void cuda_update_image() { }
         [CudafyDummy]

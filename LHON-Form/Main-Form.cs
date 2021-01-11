@@ -1,4 +1,11 @@
-﻿using System;
+﻿//
+//  Main-Form.cs
+//  LHON-Form
+//
+//  Created by Pooya Merat in 2016.
+//
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -94,10 +101,10 @@ namespace LHON_Form
                     axon_is_alive_dev, axon_mask_dev, num_alive_axons_dev, death_itr_dev, iteration);
                 if (en_prof) { gpu.Synchronize(); alg_prof.time(1); }
 
-                gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_diffusion1(pix_idx_dev, pix_idx_num, im_size,
+                gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_pre_diffusion(pix_idx_dev, pix_idx_num, im_size,
                     tox_new_dev, tox_dev, rate_dev, detox_dev, tox_prod_dev);
 
-                gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_diffusion2(pix_idx_dev, pix_idx_num, tox_new_dev, tox_dev);
+                gpu.Launch(blocks_per_grid_2D_pix, threads_per_block_1D).cuda_diffusion(pix_idx_dev, pix_idx_num, tox_new_dev, tox_dev);
 
                 if (en_prof) { gpu.Synchronize(); alg_prof.time(2); }
 

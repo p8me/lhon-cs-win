@@ -1,4 +1,10 @@
-﻿
+﻿//
+//  progression.cs
+//  LHON-Form
+//
+//  Created by Pooya Merat in 2016.
+//
+
 /*
  *  First iteration:
  //progress_step = 1F / (float)progress_num_frames;

@@ -1,4 +1,11 @@
-﻿using System;
+﻿//
+//  GPU.cs
+//  LHON-Form
+//
+//  Created by Pooya Merat in 2016.
+//
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -141,17 +148,17 @@ namespace LHON_Form
         [CudafyDummy]
         public static void cuda_update_live() { }
         [CudafyDummy]
-        public static void cuda_diffusion1() { }
+        public static void cuda_pre_diffusion() { }
         [CudafyDummy]
-        public static void cuda_diffusion2() { }
+        public static void cuda_diffusion() { }
         [CudafyDummy]
         public static void cuda_update_image() { }
         [CudafyDummy]
         public static void cuda_tox_sum() { }
         [CudafyDummy]
-        public static void cuda_prep0() { }
+        public static void cuda_pre_prep() { }
         [CudafyDummy]
-        public static void cuda_prep1() { }
+        public static void cuda_prep() { }
         [CudafyDummy]
         public static void cuda_update_init_insult() { }
     }

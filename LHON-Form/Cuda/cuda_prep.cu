@@ -1,5 +1,11 @@
-﻿
-extern "C" __global__  void cuda_prep1(unsigned short im_size, unsigned char* pix_out_of_nerve, float* rate)
+﻿//
+//  cuda_prep.cu
+//  LHON-Form
+//
+//  Created by Pooya Merat in 2016.
+//
+
+extern "C" __global__  void cuda_prep(unsigned short im_size, unsigned char* pix_out_of_nerve, float* rate)
 {
 	int x = blockIdx.x * blockDim.x + threadIdx.x;
 	int y = blockIdx.y * blockDim.y + threadIdx.y;

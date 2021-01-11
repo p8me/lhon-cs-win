@@ -1,4 +1,11 @@
-﻿using System;
+﻿//
+//  preprocess.cs
+//  LHON-Form
+//
+//  Created by Pooya Merat in 2016.
+//
+
+using System;
 using System.Diagnostics;
 using System.Linq;
 using Cudafy;
@@ -177,7 +184,7 @@ namespace LHON_Form
             int tmp = (int)Math.Ceiling((double)im_size / (double)prep_siz);
             dim3 grid_siz_prep = new dim3(tmp, tmp);
 
-            gpu.Launch(grid_siz_prep, block_siz_prep).cuda_prep0(im_size, nerve_cent_pix, nerve_r_pix_2, vein_r_pix_2, k_rate_extra, k_detox_extra,
+            gpu.Launch(grid_siz_prep, block_siz_prep).cuda_pre_prep(im_size, nerve_cent_pix, nerve_r_pix_2, vein_r_pix_2, k_rate_extra, k_detox_extra,
                 pix_out_of_nerve_dev, rate_dev, detox_dev);
 
             gpu.Synchronize();
@@ -285,7 +292,7 @@ namespace LHON_Form
                 // Debug.WriteLine("{0} vs {1}", (Math.Pow(mdl.axon_coor[i][2] * res, 2) * Math.PI).ToString("0.0"), axons_inside_pix_idx[i + 1] - axons_inside_pix_idx[i]);
             }
 
-            gpu.Launch(grid_siz_prep, block_siz_prep).cuda_prep1(im_size, pix_out_of_nerve_dev, rate_dev);
+            gpu.Launch(grid_siz_prep, block_siz_prep).cuda_prep(im_size, pix_out_of_nerve_dev, rate_dev);
             gpu.CopyFromDevice(rate_dev, rate);
 
             prep_prof.time(6);

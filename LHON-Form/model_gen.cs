@@ -1,4 +1,11 @@
-﻿using System;
+﻿//
+//  model_gen.cs
+//  LHON-Form
+//
+//  Created by Pooya Merat in 2016.
+//
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;

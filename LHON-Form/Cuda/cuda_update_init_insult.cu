@@ -1,4 +1,10 @@
-﻿
+﻿//
+//  cuda_update_init_insult.cu
+//  LHON-Form
+//
+//  Created by Pooya Merat in 2016.
+//
+
 extern "C" __global__  void cuda_update_init_insult(unsigned short bmp_im_size, int insult_x, int insult_y, int insult_r2,
 	unsigned char* init_insult_mask)
 {

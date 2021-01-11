@@ -1,4 +1,10 @@
-﻿
+﻿//
+//  cuda_update_image.cu
+//  LHON-Form
+//
+//  Created by Pooya Merat in 2016.
+//
+
 extern "C" __global__  void cuda_update_image(unsigned short im_size, unsigned short bmp_im_size, float bmp_image_compression_ratio,
 	unsigned char* bmp, float* tox, unsigned char* axon_mask, unsigned char* init_insult_mask, float death_tox_thres, bool* show_opts)
 {

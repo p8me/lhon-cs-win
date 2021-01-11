@@ -1,4 +1,11 @@
-﻿using System;
+﻿//
+//  bmp_image.cs
+//  LHON-Form
+//
+//  Created by Pooya Merat in 2016.
+//
+
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;

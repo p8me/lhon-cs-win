@@ -1,5 +1,11 @@
-﻿
-extern "C" __global__  void cuda_diffusion1(int* pix_idx, int pix_idx_num, unsigned short im_size,
+﻿//
+//  cuda_pre_diffusion.cu
+//  LHON-Form
+//
+//  Created by Pooya Merat in 2016.
+//  
+
+extern "C" __global__  void cuda_pre_diffusion(int* pix_idx, int pix_idx_num, unsigned short im_size,
 	float* tox_new, float* tox, float* rate, float* detox, float* tox_prod)
 {
 	int idx = (blockIdx.x * gridDim.y + blockIdx.y) * blockDim.x + threadIdx.x;
